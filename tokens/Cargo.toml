@@ -1,0 +1,10 @@
+[package]
+name = "titokens"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lazy_static = "1.5.0"
+quick-xml = { version = "0.36.0", features = ["serde", "serialize", "serde-types"] }
+serde = { version = "1.0.171", features = ["serde_derive"] }
+radix_trie = "0.2"
