@@ -1,0 +1,3 @@
+Disp "Hello:
+"1:->Str1:1*2->A
+""->Str2:A+1->A

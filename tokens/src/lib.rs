@@ -83,6 +83,17 @@ impl Iterator for Tokens {
     }
 }
 
+#[cfg(feature = "itertools")]
+impl itertools::PeekingNext for Tokens {
+    fn peeking_next<F>(&mut self, accept: F) -> Option<Self::Item>
+    where
+        Self: Sized,
+        F: FnOnce(&Self::Item) -> bool
+    {
+        accept(&self.peek()?).then(|| self.next().unwrap())
+    }
+}
+
 impl Tokens {
     #[must_use]
     pub fn from_bytes(bytes: &[u8], version: Version) -> Self {

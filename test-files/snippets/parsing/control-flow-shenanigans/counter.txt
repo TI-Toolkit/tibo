@@ -1,0 +1,17 @@
+For(A,0,1
+If not(A
+Goto A
+Disp B
+Stop
+
+Lbl A
+If not(getKey
+Then
+Goto A
+End
+
+0->B
+Lbl B
+B+1->B
+End
+Goto B

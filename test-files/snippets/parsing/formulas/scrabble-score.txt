@@ -1,0 +1,1 @@
+sum(int(10^^(sqrt(sinh(fPart(455tan^-1(seq(inString("FJBCQKDGHVWZXMYP",sub(Str1,X,1)),X,1,length(Str1

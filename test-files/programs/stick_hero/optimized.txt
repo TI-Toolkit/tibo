@@ -1,0 +1,126 @@
+LabelOff:AxesOff:GridOff:BackgroundOff
+ZStandard:ZSquare:TextColor(Black
+SetUpEditor |LSTICK
+2->dim(|LSTICK
+Fill(0,|LSTICK
+Xmin->X
+X+3->W
+{11,15,19,14,10,17,13,12->L1
+Repeat 3<=|LSTICK(2
+ClrDraw
+For(A,2,4,2
+Line(X,~5,W,~5,1,Black,A
+End
+Line(W,~5,W,~10,1,Black
+W+randInt(2,8->I
+.5randInt(1,5->J
+Line(I,~5,I+J,~5,1,Black,4
+Line(I,~10,I,~5,1,Black
+Line(I+J,~10,I+J,~5,1,Black
+.5(W+X
+Pt-On(Ans,~4.5,2,Black
+Pt-Off(Ans,~4.5,3
+Pt-On(W,~5,3,Black
+Text(1,55,"STICK HERO CE!
+"
+If 100>|LSTICK(1
+"0
+If 10>|LSTICK(1
+"00
+Text(35,237,Ans,|LSTICK(1
+For(A,1,3-|LSTICK(2
+Pt-On(Xmax-1.5A,Ymax-1,2,Black
+Pt-Off(Xmax-1.5A,Ymax-1,3
+End
+Lbl R
+Line(W,~5,W,~5+abs(T),0
+DelVar TgetKey
+Repeat Ans or T>15
+T+0.1->T
+Line(W,~5,W,~5+T,1,Brown,1
+getKey
+End
+Ans->K
+If K=45
+Goto P
+W->A:~5->B
+~pi/64->theta
+Repeat theta>=pi/2
+Line(W,~5,A,B,0
+Pt-On(W,~5,3,Black
+theta+pi/64->theta
+W+Tsin(theta->A
+~5+Tcos(theta->B
+Line(W,~5,A,B,1,Brown,1
+End
+For(A,~1.5,T,0.5
+W+A
+Pt-On(Ans,~4.5,2,Black
+Pt-Off(Ans,~4.5,3
+Wait .05
+Pt-Off(Ans,~4.5,2
+End
+W+T->M
+If M>=I and M<=(I+J
+Then
+1+|LSTICK(1->|LSTICK(1
+(2I+J)/2
+For(A,M,Ans,.5(1-2(Ans<M
+Pt-On(A,~4.5,2,Black
+Pt-Off(A,~4.5,3
+Wait .05
+Pt-Off(A,~4.5,2
+End
+.5(2I+J->L
+~1->B
+For(A,pi,9pi,pi/4
+B+1->B
+~4.5+1.5abs(sin(A
+Pt-On(L,Ans,2,L1(1+remainder(B,8
+Pt-Off(L,Ans,3
+Wait .05
+Pt-Off(L,Ans,2
+End
+Else
+1+|LSTICK(2->|LSTICK(2
+For(A,~5,~10,~.5
+If (W+T+.5)>=I and (W+T-.5)<=(I+J
+Then
+Line(I,~5,I+J,~5,1,Black,4
+Line(I,~10,I,~5,1,Black
+Line(I+J,~10,I+J,~5,1,Black
+End
+Pt-On(W+T,A,2,Black
+Pt-Off(W+T,A,3
+Wait 0.05
+Pt-Off(W+T,A,2
+End
+End
+End
+ClrDraw
+SetUpEditor |LSH
+10->dim(|LSH
+|LSTICK(1->N
+Ans->|LSH(11
+SortD(|LSH
+10->dim(|LSH
+TextColor(Black
+Text(1,1,"HIGHSCORES:
+1->C
+For(A,1,10
+TextColor(Black
+If C and N=|LSH(A
+Then
+DelVar CTextColor(Red
+End
+Text(12A+12,12,A=10,remainder(A,10),": ",|LSH(A
+End
+Archive |LSH
+Wait 5
+Lbl P
+If K=45
+Pause "[ENTER]
+If K=45
+Goto R
+ClrHome
+"HIT [ENTER] TO PLAY AGAIN!
