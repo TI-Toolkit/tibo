@@ -22,6 +22,8 @@ pub enum ListName {
         /// filled at the end.
         name: [u8; 5],
     },
+
+    Ans,
 }
 
 impl Parse for ListName {

@@ -2,7 +2,7 @@ use tifloats::{Float, tifloat};
 
 use titokens::{Token, Tokens};
 
-use crate::parse::components::{Component, string::TIString};
+use crate::parse::components::{Operand, string::TIString};
 use crate::parse::Parse;
 
 pub struct Builder<'a> {
@@ -183,8 +183,8 @@ impl Parse for tifloats::Float {
     }
 }
 
-pub(crate) fn parse_constant(tok: Token, more: &mut Tokens) -> Option<Component> {
-    use super::Component::NumericLiteral as NL;
+pub(crate) fn parse_constant(tok: Token, more: &mut Tokens) -> Option<Operand> {
+    use super::Operand::NumericLiteral as NL;
     match tok {
         // pi
         Token::OneByte(0xAC) => Some(NL(tifloat!(0x0031415926535898 * 10 ^ 0))),
@@ -211,19 +211,19 @@ pub(crate) fn parse_constant(tok: Token, more: &mut Tokens) -> Option<Component>
 
         // LEFT
         Token::TwoByte(0xEF, 0x92) => {
-            Some(Component::StringLiteral(TIString::new(vec![Token::OneByte(
+            Some(Operand::StringLiteral(TIString::new(vec![Token::OneByte(
                 0x30,
             )])))
         }
         // CENTER
         Token::TwoByte(0xEF, 0x93) => {
-            Some(Component::StringLiteral(TIString::new(vec![Token::OneByte(
+            Some(Operand::StringLiteral(TIString::new(vec![Token::OneByte(
                 0x31,
             )])))
         }
         // RIGHT
         Token::TwoByte(0xEF, 0x94) => {
-            Some(Component::StringLiteral(TIString::new(vec![Token::OneByte(
+            Some(Operand::StringLiteral(TIString::new(vec![Token::OneByte(
                 0x32,
             )])))
         }

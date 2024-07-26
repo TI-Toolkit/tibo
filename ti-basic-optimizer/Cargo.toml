@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
 titokens = { path = "../tokens", features = ["itertools"] }
-tifloats = "2.2.0"
+tifloats = "2.3.0"
 itertools = "0.13.0"
 
 [dev-dependencies]

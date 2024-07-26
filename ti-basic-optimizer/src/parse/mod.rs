@@ -1,6 +1,6 @@
 use titokens::{Token, Tokens};
 
-use crate::parse::components::Component;
+use crate::parse::components::Operand;
 
 mod components;
 mod expression;

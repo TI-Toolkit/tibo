@@ -1,3 +1,4 @@
+use std::fmt::{Debug, Formatter};
 pub use tokenizer::Tokenizer;
 pub use version::{Model, Version};
 
@@ -6,7 +7,7 @@ mod version;
 
 mod xmlparse;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Token {
     OneByte(u8),
     /// upper byte, lower byte
@@ -62,6 +63,15 @@ impl From<Token> for u16 {
         match value {
             Token::OneByte(a) => a as u16,
             Token::TwoByte(a, b) => ((a as u16) << 8) | (b as u16),
+        }
+    }
+}
+
+impl Debug for Token {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Token::OneByte(a) => f.write_str(&format!("0x{:0>2x}", a)),
+            Token::TwoByte(a, b) => f.write_str(&format!("0x{:0>2x}{:0>2x}", a, b))
         }
     }
 }

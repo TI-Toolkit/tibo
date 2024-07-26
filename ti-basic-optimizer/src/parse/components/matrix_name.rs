@@ -22,6 +22,8 @@ pub enum MatrixName {
     H,
     // $5C08
     I,
+
+    Ans,
 }
 
 impl Parse for MatrixName {

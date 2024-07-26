@@ -268,9 +268,9 @@ dependencies = [
 
 [[package]]
 name = "tifloats"
-version = "2.2.0"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb80fd413dec4c1d2f01cb77f803464381c93b81ae0d63f842e125d8d14538d3"
+checksum = "edbdf6856d3fbce404dd38c321955a43064c4a2071293189ad49cd3b5a5cbe0b"
 dependencies = [
  "bitflags",
 ]

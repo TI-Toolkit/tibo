@@ -3,6 +3,7 @@ use clap::Parser;
 use titokens::Tokens;
 
 mod data;
+mod passes;
 mod parse;
 
 #[derive(Parser, Debug)]
@@ -20,6 +21,4 @@ fn optimize(tokens: Tokens, settings: Settings) {
 
 fn main() {
     let settings = Settings::parse();
-
-    println!("{} {}", settings.size_opts, settings.speed_opts);
 }
