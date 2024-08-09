@@ -1,8 +1,8 @@
 use std::fmt::{Debug, Display, Formatter};
 
-use titokens::{Token, Tokens};
+use titokens::{Token, Tokens, Version};
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Line {
     pub tokens: Vec<Token>,
     pub parse: Option<LineParse>,
@@ -16,6 +16,7 @@ pub enum LineParse {
 
 pub struct Program {
     pub lines: Vec<Line>,
+    pub version: Version,
 }
 
 #[cfg(test)]
@@ -23,8 +24,7 @@ impl Display for Program {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let tokenizer = titokens::Tokenizer::new(test_files::test_version(), "en");
         self.lines.iter().map(|line| {
-            let tokens = Tokens::from_vec(line.tokens.clone(), test_files::test_version());
-            let (line_text, _boundaries) = tokens.to_string(&tokenizer);
+            let (line_text, _boundaries) = Tokens::from_vec(line.tokens.clone(), test_files::test_version()).to_string(&tokenizer);
 
             f.write_str(&format!("\n{:0>3}: {}", line.original_line_number, line_text))
         }).collect()
@@ -83,8 +83,17 @@ impl Program {
         }
 
         Program {
-            lines
+            lines,
+            version: tokens.version().clone(),
         }
+    }
+}
+
+impl From<Tokens> for Program {
+    fn from(value: Tokens) -> Self {
+        let mut tokens = value;
+
+        Program::from_tokens(tokens)
     }
 }
 

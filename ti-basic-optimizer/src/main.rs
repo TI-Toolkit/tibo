@@ -2,9 +2,7 @@ use clap::Parser;
 
 use titokens::Tokens;
 
-mod data;
-mod passes;
-mod parse;
+use ti_basic_optimizer::*;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
