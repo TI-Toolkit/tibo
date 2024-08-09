@@ -35,12 +35,8 @@ impl<'a> Builder<'a> {
 
     #[must_use]
     pub fn build(mut self) -> Expression {
-        loop {
-            if let Some(next) = self.tokens.next() {
-                if !self.process_next(next) {
-                    break
-                }
-            } else {
+        while let Some(next) = self.tokens.next() {
+            if !self.process_next(next) {
                 break
             }
         }
@@ -200,6 +196,11 @@ impl<'a> Builder<'a> {
 
     fn valid(&self) -> bool {
         self.operator_stack.len() == 0 && self.operand_stack.len() == 1
+        self.operator_stack.is_empty() && self.operand_stack.len() == 1
+    }
+
+    fn has_ambiguity(&self) -> bool {
+        todo!();
     }
 
     fn finalize(&mut self) -> Expression {
@@ -224,6 +225,7 @@ impl Parse for Expression {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
     use test_files::load_test_data;

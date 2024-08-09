@@ -1,0 +1,10 @@
+For(K,0,1
+If K
+Then
+Goto A
+End
+While 0
+Lbl A
+Else
+End
+End

@@ -1,0 +1,12 @@
+If 1
+Then
+0
+DelVar AWhile 0
+Lbl A
+DelVar AWhile 0
+Lbl B
+DelVar AWhile 0
+End
+Ans+1
+If Ans=1:Goto A
+If Ans=2:Goto B
