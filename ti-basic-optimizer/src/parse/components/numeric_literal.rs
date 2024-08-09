@@ -172,7 +172,7 @@ impl<'a> Builder<'a> {
 impl Parse for tifloats::Float {
     fn parse(token: Token, more: &mut Tokens) -> Option<Self> {
         match token {
-            Token::OneByte(0x30..=0x39 | 0x3A | 0x3B) => {
+            Token::OneByte(0x30..=0x3B) => {
                 more.backtrack_once();
                 let mut builder = Builder::new(more);
                 Some(builder.parse())

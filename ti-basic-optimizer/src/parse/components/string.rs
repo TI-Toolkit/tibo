@@ -29,7 +29,7 @@ impl TIString {
 impl Parse for TIString {
     fn parse(token: Token, more: &mut Tokens) -> Option<Self> {
         matches!(token, Token::OneByte(0x2A)).then(|| {
-            let mut data: Vec<Token> = more.peeking_take_while(|tok| !matches!(tok, Token::OneByte(0x04 | 0x3F | 0x2A))).collect(); // ->, \n, "
+            let data: Vec<Token> = more.peeking_take_while(|tok| !matches!(tok, Token::OneByte(0x04 | 0x3F | 0x2A))).collect(); // ->, \n, "
             match more.peek() {
                 Some(Token::OneByte(0x2A)) => { more.next(); }
                 _ => {}
