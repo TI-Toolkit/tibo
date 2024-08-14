@@ -1,9 +1,7 @@
 use titokens::{Token, Tokens};
 
-use crate::parse::components::Operand;
-
-mod components;
-mod expression;
+pub mod components;
+pub mod expression;
 
 pub(crate) trait Parse: Sized {
     fn parse(token: Token, more: &mut Tokens) -> Option<Self>;

@@ -38,21 +38,36 @@ impl OperatorKind for BinOp {
 }
 
 impl BinOp {
-    pub fn recognize_precedence(token: Token) -> u8 {
+    /// If `left` and `right` are flipped, which operator would produce the same result?
+    pub fn opposite(&self) -> Option<Token> {
+        match self.kind {
+            // + * or xor and = !=
+            Token::OneByte(x) if matches!(x, 0x70 | 0x82 | 0x3C | 0x3D | 0x40 | 0x6A | 0x6D) => Some(Token::OneByte(x)),
+
+            Token::OneByte(0x6B) => Some(Token::OneByte(0x6F)),
+            Token::OneByte(0x6C) => Some(Token::OneByte(0x6E)),
+            Token::OneByte(0x6E) => Some(Token::OneByte(0x6C)),
+            Token::OneByte(0x6F) => Some(Token::OneByte(0x6B)),
+
+            _ => None
+        }
+    }
+
+    pub fn recognize_precedence(token: Token) -> Option<u8> {
         match token {
-            Token::OneByte(0x3C | 0x3D) => 10, // or xor
-            Token::OneByte(0x40) => 20, // and
-            Token::OneByte(0x6A..=0x6F) => 30, // = < > != <= >=
-            Token::OneByte(0x70 | 0x71) => 40, // + -
-            Token::OneByte(0x82 | 0x83) => 50, // * /
-            Token::OneByte(0x94 | 0x95) => 60, // nPr nCr
-            Token::OneByte(0xF0 | 0xF1) => 70, // ^ xroot
-            _ => 0
+            Token::OneByte(0x3C | 0x3D) => Some(10), // or xor
+            Token::OneByte(0x40) => Some(20), // and
+            Token::OneByte(0x6A..=0x6F) => Some(30), // = < > != <= >=
+            Token::OneByte(0x70 | 0x71) => Some(40), // + -
+            Token::OneByte(0x82 | 0x83) => Some(50), // * /
+            Token::OneByte(0x94 | 0x95) => Some(60), // nPr nCr
+            Token::OneByte(0xF0 | 0xF1) => Some(70), // ^ xroot
+            _ => None
         }
     }
 
     pub fn precedence(&self) -> u8 {
-        Self::recognize_precedence(self.kind)
+        Self::recognize_precedence(self.kind).unwrap()
     }
 }
 
@@ -60,13 +75,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn zero_precedence_if_not_binop() {
-        assert_eq!(BinOp::recognize_precedence(Token::OneByte(0x10)), 0)
+    fn no_precedence_if_not_binop() {
+        assert!(BinOp::recognize_precedence(Token::OneByte(0x10)).is_none())
     }
 
     #[test]
     fn greater_precedence() {
         // * has greater precedence than +
-        assert!(BinOp::recognize_precedence(Token::OneByte(0x82)) > BinOp::recognize_precedence(Token::OneByte(0x70)))
+        assert!(BinOp::recognize_precedence(Token::OneByte(0x82)).unwrap() > BinOp::recognize_precedence(Token::OneByte(0x70)).unwrap())
     }
 }

@@ -9,7 +9,7 @@ pub enum Expression {
     Operand(Operand),
 }
 
-struct Builder<'a> {
+pub struct Builder<'a> {
     operand_stack: Vec<Expression>,
     operator_stack: Vec<Token>,
 
@@ -49,13 +49,10 @@ impl<'a> Builder<'a> {
             match next {
                 Token::OneByte(0x10) => { // (
                     self.open_paren();
-
                     true
                 }
 
                 Token::OneByte(0x11) if self.paren_depth > 0 => { // )
-                    self.paren_depth -= 1;
-
                     self.close_paren();
                     true
                 }
@@ -148,13 +145,13 @@ impl<'a> Builder<'a> {
     fn push_binop(&mut self, operator: Token) {
         assert!(BinOp::recognize(operator));
 
-        let precedence = BinOp::recognize_precedence(operator);
+        let precedence = BinOp::recognize_precedence(operator).unwrap();
 
         self.implicit_mul_allowed = false;
 
         while self.operator_stack.last().is_some_and(|tok|
             UnOp::recognize(*tok) ||
-                (BinOp::recognize_precedence(*tok) > precedence) // always false if not BinOp
+                (BinOp::recognize_precedence(*tok).unwrap_or(0) > precedence) // always false if not BinOp
         ) {
             let token = self.operator_stack.pop().unwrap();
 
@@ -195,7 +192,6 @@ impl<'a> Builder<'a> {
     }
 
     fn valid(&self) -> bool {
-        self.operator_stack.len() == 0 && self.operand_stack.len() == 1
         self.operator_stack.is_empty() && self.operand_stack.len() == 1
     }
 
@@ -231,8 +227,24 @@ mod tests {
     use test_files::load_test_data;
 
     #[test]
-    fn try_it() {
+    fn quadratic() {
         let mut tokens = load_test_data("/snippets/parsing/formulas/quadratic.txt");
+
+        let builder = Builder::new(&mut tokens);
+        let _ = builder.build();
+    }
+
+    #[test]
+    fn unop() {
+        let mut tokens = load_test_data("/snippets/parsing/formulas/unop.txt");
+
+        let builder = Builder::new(&mut tokens);
+        let _ = builder.build();
+    }
+
+    #[test]
+    fn manual_sum() {
+        let mut tokens = load_test_data("/snippets/parsing/formulas/manual-sum.txt");
 
         let builder = Builder::new(&mut tokens);
         let _ = builder.build();
