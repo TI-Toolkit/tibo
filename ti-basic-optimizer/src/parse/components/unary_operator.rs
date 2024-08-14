@@ -13,7 +13,8 @@ impl OperatorKind for UnOp {
         matches!(token,
             Token::OneByte(0xB0) | // Negate
             Token::OneByte(0x0A..=0x0F) | // Radian, Reciprocal, Squared, Transpose, Cubed
-            Token::OneByte(0x2D)
+            Token::OneByte(0x2D) | // Factorial
+            Token::TwoByte(0xBB, 0xDA) // Percent (undocumented)
         )
     }
 }
