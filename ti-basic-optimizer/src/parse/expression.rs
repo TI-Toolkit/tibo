@@ -41,6 +41,8 @@ impl<'a> Builder<'a> {
             }
         }
 
+        self.tokens.backtrack_once();
+
         self.finalize()
     }
 
@@ -248,5 +250,15 @@ mod tests {
 
         let builder = Builder::new(&mut tokens);
         let _ = builder.build();
+    }
+
+    #[test]
+    fn function_closing() {
+        let mut tokens = load_test_data("/snippets/parsing/function-parsing/function-closing.txt");
+
+        let builder = Builder::new(&mut tokens);
+        let expr = builder.build();
+
+        assert!(matches!(expr, Expression::Operator(Operator::Binary(_))));
     }
 }
