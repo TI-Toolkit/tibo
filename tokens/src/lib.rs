@@ -7,6 +7,9 @@ mod version;
 
 mod xmlparse;
 
+#[cfg(feature = "deku-8xp")]
+pub mod ti_connect_file;
+
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Token {
     OneByte(u8),
