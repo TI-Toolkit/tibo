@@ -71,7 +71,7 @@ impl Debug for Token {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Token::OneByte(a) => f.write_str(&format!("0x{:0>2x}", a)),
-            Token::TwoByte(a, b) => f.write_str(&format!("0x{:0>2x}{:0>2x}", a, b))
+            Token::TwoByte(a, b) => f.write_str(&format!("0x{:0>2x}{:0>2x}", a, b)),
         }
     }
 }
@@ -80,7 +80,7 @@ impl Debug for Token {
 pub struct Tokens {
     tokens: Vec<Token>,
     pos: usize,
-    version: Version,
+    version: Option<Version>,
 }
 
 impl Iterator for Tokens {
@@ -98,7 +98,7 @@ impl itertools::PeekingNext for Tokens {
     fn peeking_next<F>(&mut self, accept: F) -> Option<Self::Item>
     where
         Self: Sized,
-        F: FnOnce(&Self::Item) -> bool
+        F: FnOnce(&Self::Item) -> bool,
     {
         accept(&self.peek()?).then(|| self.next().unwrap())
     }
@@ -106,7 +106,7 @@ impl itertools::PeekingNext for Tokens {
 
 impl Tokens {
     #[must_use]
-    pub fn from_bytes(bytes: &[u8], version: Version) -> Self {
+    pub fn from_bytes(bytes: &[u8], version: Option<Version>) -> Self {
         let mut iter = bytes.iter();
         let mut tokens = vec![];
 
@@ -126,7 +126,7 @@ impl Tokens {
     }
 
     #[must_use]
-    pub fn from_vec(tokens: Vec<Token>, version: Version) -> Self {
+    pub fn from_vec(tokens: Vec<Token>, version: Option<Version>) -> Self {
         Tokens {
             tokens,
             pos: 0,
@@ -153,6 +153,23 @@ impl Tokens {
     }
 
     pub fn version(&self) -> &Version {
-        &self.version
+        self.version.as_ref().unwrap()
+    }
+}
+
+impl From<Tokens> for Vec<u8> {
+    fn from(value: Tokens) -> Self {
+        let mut result = vec![];
+        for tok in value {
+            match tok {
+                Token::OneByte(a) => result.push(a),
+                Token::TwoByte(a, b) => {
+                    result.push(a);
+                    result.push(b);
+                }
+            }
+        }
+
+        result
     }
 }

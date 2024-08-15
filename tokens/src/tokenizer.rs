@@ -51,7 +51,7 @@ impl Tokenizer {
         }
 
         Ok((
-            Tokens::from_vec(result, self.version.clone()),
+            Tokens::from_vec(result, Some(self.version.clone())),
             token_boundaries,
         ))
     }
