@@ -11,6 +11,15 @@ pub struct IsDs {
 
 impl Parse for IsDs {
     fn parse(token: Token, more: &mut Tokens) -> Option<Self> {
-        todo!()
+        (token == Token::OneByte(0xDA) || token == Token::OneByte(0xDB)).then(|| {
+            let variable = NumericVarName::parse(more.next().unwrap(), more).unwrap();
+            assert_eq!(more.next(), Some(Token::OneByte(0x2B)));
+            let condition = Expression::parse(more.next().unwrap(), more).unwrap();
+
+            IsDs {
+                variable,
+                condition,
+            }
+        })
     }
 }

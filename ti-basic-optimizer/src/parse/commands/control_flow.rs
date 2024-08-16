@@ -2,11 +2,8 @@ mod for_loop;
 mod menu;
 mod isds;
 
-use crate::parse::commands::control_flow::menu::Menu;
-use crate::parse::expression::Expression;
-use crate::parse::Parse;
+use crate::parse::{expression::Expression, Parse, commands::control_flow::{for_loop::ForLoop, menu::Menu, isds::IsDs}};
 use titokens::{Token, Tokens};
-use crate::parse::commands::control_flow::for_loop::ForLoop;
 
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub struct LabelName(u16);
@@ -32,6 +29,7 @@ impl Parse for LabelName {
 
 pub enum ControlFlow {
     If(Expression),
+    Then,
     While(Expression),
     Repeat(Expression),
     For(ForLoop),
@@ -40,6 +38,8 @@ pub enum ControlFlow {
     Lbl(LabelName),
     Goto(LabelName),
     Stop,
+    IsGt(IsDs),
+    DsLt(IsDs),
     Menu(Menu),
 }
 
@@ -49,6 +49,7 @@ impl Parse for ControlFlow {
         use Expression as Expr;
         match token {
             Token::OneByte(0xCE) => Some(CF::If(Expr::parse(more.next().unwrap(), more).unwrap())),
+            Token::OneByte(0xCF) => Some(CF::Then),
             Token::OneByte(0xD1) => Some(CF::While(Expr::parse(more.next().unwrap(), more).unwrap())),
             Token::OneByte(0xD2) => Some(CF::Repeat(Expr::parse(more.next().unwrap(), more).unwrap())),
             Token::OneByte(0xD3) => Some(CF::For(ForLoop::parse(more.next().unwrap(), more).unwrap())),
@@ -57,6 +58,8 @@ impl Parse for ControlFlow {
             Token::OneByte(0xD6) => Some(CF::Lbl(LabelName::parse(more.next().unwrap(), more).unwrap())),
             Token::OneByte(0xD7) => Some(CF::Goto(LabelName::parse(more.next().unwrap(), more).unwrap())),
             Token::OneByte(0xD9) => Some(CF::Stop),
+            Token::OneByte(0xDA) => Some(CF::IsGt(IsDs::parse(more.next().unwrap(), more).unwrap())),
+            Token::OneByte(0xDB) => Some(CF::DsLt(IsDs::parse(more.next().unwrap(), more).unwrap())),
             Token::OneByte(0xE6) => Some(CF::Menu(Menu::parse(more.next().unwrap(), more).unwrap())),
             _ => None,
         }
