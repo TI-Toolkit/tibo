@@ -27,7 +27,7 @@ impl Parse for LabelName {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum ControlFlow {
     If(Expression),
     Then,
@@ -53,15 +53,15 @@ impl Parse for ControlFlow {
             Token::OneByte(0xCF) => Some(CF::Then),
             Token::OneByte(0xD1) => Some(CF::While(Expr::parse(more.next().unwrap(), more).unwrap())),
             Token::OneByte(0xD2) => Some(CF::Repeat(Expr::parse(more.next().unwrap(), more).unwrap())),
-            Token::OneByte(0xD3) => Some(CF::For(ForLoop::parse(more.next().unwrap(), more).unwrap())),
+            Token::OneByte(0xD3) => Some(CF::For(ForLoop::parse(token, more).unwrap())),
             Token::OneByte(0xD4) => Some(CF::End),
             Token::OneByte(0xD5) => Some(CF::Return),
             Token::OneByte(0xD6) => Some(CF::Lbl(LabelName::parse(more.next().unwrap(), more).unwrap())),
             Token::OneByte(0xD7) => Some(CF::Goto(LabelName::parse(more.next().unwrap(), more).unwrap())),
             Token::OneByte(0xD9) => Some(CF::Stop),
-            Token::OneByte(0xDA) => Some(CF::IsGt(IsDs::parse(more.next().unwrap(), more).unwrap())),
-            Token::OneByte(0xDB) => Some(CF::DsLt(IsDs::parse(more.next().unwrap(), more).unwrap())),
-            Token::OneByte(0xE6) => Some(CF::Menu(Menu::parse(more.next().unwrap(), more).unwrap())),
+            Token::OneByte(0xDA) => Some(CF::IsGt(IsDs::parse(token, more).unwrap())),
+            Token::OneByte(0xDB) => Some(CF::DsLt(IsDs::parse(token, more).unwrap())),
+            Token::OneByte(0xE6) => Some(CF::Menu(Menu::parse(token, more).unwrap())),
             _ => None,
         }
     }
