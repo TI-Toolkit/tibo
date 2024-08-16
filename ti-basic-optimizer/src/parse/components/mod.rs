@@ -120,3 +120,28 @@ impl Parse for DelVarTarget {
         }
     }
 }
+
+#[derive(Clone, Debug)]
+pub enum StoreTarget {
+    NumericVar(NumericVarName),
+    List(ListName),
+    Matrix(MatrixName),
+    String(StringName),
+    // ListAccess, ArrayAccess
+}
+
+impl Parse for StoreTarget {
+    fn parse(token: Token, more: &mut Tokens) -> Option<Self> {
+        match token {
+            Token::OneByte(0x41..=0x5B) | Token::TwoByte(0x62, 0x21) => {
+                NumericVarName::parse(token, more).map(Self::NumericVar)
+            }
+            Token::TwoByte(0xAA, _) => StringName::parse(token, more).map(Self::String),
+            Token::TwoByte(0x5C, _) => MatrixName::parse(token, more).map(Self::Matrix),
+            Token::TwoByte(0x5D, _) | Token::OneByte(0xEB) => {
+                ListName::parse(token, more).map(Self::List)
+            },
+            _ => None
+        }
+    }
+}

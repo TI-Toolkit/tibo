@@ -6,14 +6,17 @@ pub use control_flow::ControlFlow;
 pub use delvar_chain::DelVarChain;
 pub use generic::Generic;
 
-use crate::parse::Parse;
+use crate::parse::{Parse, expression::Expression};
 use titokens::{Token, Tokens};
+use crate::parse::components::StoreTarget;
 
 #[derive(Clone, Debug)]
 pub enum Command {
     ControlFlow(ControlFlow),
     Generic(Generic),
     DelVarChain(DelVarChain),
+    Expression(Expression),
+    Store(Expression, StoreTarget),
 }
 
 impl Parse for Command {
@@ -21,5 +24,15 @@ impl Parse for Command {
         (Generic::parse(token, more).map(Command::Generic))
             .or_else(|| ControlFlow::parse(token, more).map(Command::ControlFlow))
             .or_else(|| DelVarChain::parse(token, more).map(Command::DelVarChain))
+            .or_else(|| {
+                let expr = Expression::parse(token, more);
+                if expr.is_some() && more.peek() == Some(Token::OneByte(0x04)) {
+                    more.next();
+
+                    Some(Command::Store(expr.unwrap(), StoreTarget::parse(more.next().unwrap(), more).unwrap()))
+                } else {
+                    expr.map(Command::Expression)
+                }
+            })
     }
 }
