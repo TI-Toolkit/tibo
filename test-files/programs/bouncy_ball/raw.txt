@@ -1,0 +1,44 @@
+Lbl 0
+"BOUNCY BALL SIM 2017
+Menu(Ans,"PLAY",P,"CREDITS",C,"QUIT",Q
+Lbl C
+ClrHome
+Disp Ans+" WAS
+Pause "MADE BY _iPhoenix_
+Goto 0
+Lbl P
+ZStandard:ZSquare
+DelVar ADelVar BDelVar CDelVar D9.25
+For(theta,0,1
+Line(~Ans,Ans,Ans,Ans,1,BLACK,1
+Line(Ans,~Ans,Ans,Ans,1,BLACK,1
+~Ans
+End
+~.9->L
+Repeat K=~2
+A->I
+B->J
+~LC->C
+A+Ans->A
+D-.1->D
+B+Ans->B
+If Ans<=~9
+Then
+.8C->C
+LD(D^^2>.01->D
+~9->B
+End
+max(~9,min(A,9->theta
+If A!=Ans
+LC->C
+theta->A
+If B>9
+LD->D
+min(B,9->B
+Pt-Off(I,J
+Pt-On(A,Ans
+getKey-25->K
+D-(Ans=9)+not(Ans->D
+C+K(1=abs(K->C
+End
+Lbl Q

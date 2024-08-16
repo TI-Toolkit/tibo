@@ -31,7 +31,7 @@ impl Parse for Generic {
                             more.next();
                             break;
                         }
-                        None => break, // :, \n, EOF
+                        Some(Token::OneByte(0x3E | 0x3F)) | None => break, // :, \n, EOF
 
                         Some(x) => panic!("Unexpected token {:?} in generic command invocation.", x),
                     }

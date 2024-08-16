@@ -2,16 +2,13 @@ use titokens::{Token, Tokens};
 
 pub mod components;
 pub mod expression;
-mod commands;
+pub mod commands;
+mod program;
 
 pub(crate) trait Parse: Sized {
     fn parse(token: Token, more: &mut Tokens) -> Option<Self>;
 }
 
-pub enum Command {
-    ControlFlow,
-    ModeSetting,
-    DelVar,
 pub(crate) trait Reconstruct {
     fn reconstruct(&self) -> Vec<Token>;
 }

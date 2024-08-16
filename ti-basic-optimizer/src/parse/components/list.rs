@@ -25,7 +25,7 @@ impl Parse for TIList {
                         more.next().unwrap();
                         break
                     }
-                    None => break, // :, \n, EOF
+                    Some(Token::OneByte(0x04 | 0x3E | 0x3F)) | None => break, // -> :, \n, EOF
 
                     x => panic!("Unexpected token {:?} in list definition.", x.unwrap())
                 }
