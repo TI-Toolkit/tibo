@@ -2,7 +2,7 @@ use crate::parse::expression::Expression;
 use crate::parse::Parse;
 use titokens::{Token, Tokens};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Generic {
     pub kind: Token,
     pub arguments: Vec<Expression>,
@@ -33,7 +33,7 @@ impl Parse for Generic {
                         }
                         None => break, // :, \n, EOF
 
-                        Some(x) => panic!("Unexpected token {:?} in function call.", x),
+                        Some(x) => panic!("Unexpected token {:?} in generic command invocation.", x),
                     }
 
                     next = more.next().unwrap();
@@ -157,7 +157,6 @@ impl Generic {
             | 0xBB51 // ExprOff
             | 0xBB52 // ClrAllLists
             | 0xBB53 // GetCalc
-            | 0xBB54 // DelVar
             | 0xBB55 // EquToString
             | 0xBB56 // StringToEqu
             | 0xBB57 // ClearEntries

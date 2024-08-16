@@ -9,7 +9,7 @@ pub use generic::Generic;
 use crate::parse::Parse;
 use titokens::{Token, Tokens};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Command {
     ControlFlow(ControlFlow),
     Generic(Generic),

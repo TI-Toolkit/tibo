@@ -2,7 +2,7 @@ use titokens::{Token, Tokens};
 
 use crate::parse::{commands::Command, components::DelVarTarget, Parse};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct DelVarChain {
     pub deletions: Vec<DelVarTarget>,
     pub valence: Option<Box<Command>>,

@@ -1,7 +1,7 @@
 use titokens::{Token, Tokens};
 use crate::parse::{commands::control_flow::LabelName, expression::Expression, Parse};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Menu {
     pub title: Expression,
     pub option_titles: Vec<Expression>,
@@ -39,7 +39,7 @@ impl Parse for Menu {
 
                 None => break, // :, \n, EOF
 
-                Some(x) => panic!("Unexpected token {:?} in function call.", x)
+                Some(x) => panic!("Unexpected token {:?} in menu.", x)
             }
         }
 
