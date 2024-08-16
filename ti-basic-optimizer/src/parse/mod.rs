@@ -12,4 +12,6 @@ pub enum Command {
     ControlFlow,
     ModeSetting,
     DelVar,
+pub(crate) trait Reconstruct {
+    fn reconstruct(&self) -> Vec<Token>;
 }

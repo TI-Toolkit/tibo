@@ -2,6 +2,7 @@ use crate::parse::expression::Expression;
 use crate::parse::Parse;
 use titokens::{Token, Tokens};
 
+#[derive(Clone)]
 pub struct Generic {
     pub kind: Token,
     pub arguments: Vec<Expression>,

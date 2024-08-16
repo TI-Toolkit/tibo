@@ -1,6 +1,6 @@
 use titokens::{Token, Tokens};
 
-use crate::parse::Parse;
+use crate::parse::{Parse, Reconstruct};
 
 #[derive(Copy, Clone, Debug)]
 pub struct NumericVarName(Token);
@@ -12,5 +12,11 @@ impl Parse for NumericVarName {
 
             _ => None,
         }
+    }
+}
+
+impl Reconstruct for NumericVarName {
+    fn reconstruct(&self) -> Vec<Token> {
+        vec![self.0]
     }
 }

@@ -1,5 +1,6 @@
 use titokens::{Token, Tokens};
-use crate::parse::Parse;
+use crate::parse::{Parse, Reconstruct};
+use crate::parse::components::NumericVarName;
 
 #[derive(Copy, Clone, Debug)]
 pub struct PicName(Token);
@@ -13,6 +14,12 @@ impl Parse for PicName {
     }
 }
 
+impl Reconstruct for PicName {
+    fn reconstruct(&self) -> Vec<Token> {
+        vec![self.0]
+    }
+}
+
 #[derive(Copy, Clone, Debug)]
 pub struct ImageName(Token);
 
@@ -22,5 +29,11 @@ impl Parse for ImageName {
             Token::TwoByte(0xEF, 0x50..=0x59) => Some(ImageName(token)),
             _ => None,
         }
+    }
+}
+
+impl Reconstruct for ImageName {
+    fn reconstruct(&self) -> Vec<Token> {
+        vec![self.0]
     }
 }

@@ -27,6 +27,7 @@ impl Parse for LabelName {
     }
 }
 
+#[derive(Clone)]
 pub enum ControlFlow {
     If(Expression),
     Then,

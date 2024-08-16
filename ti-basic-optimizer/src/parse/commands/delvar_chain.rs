@@ -2,9 +2,10 @@ use titokens::{Token, Tokens};
 
 use crate::parse::{commands::Command, components::DelVarTarget, Parse};
 
+#[derive(Clone)]
 pub struct DelVarChain {
     pub deletions: Vec<DelVarTarget>,
-    pub valence: Option<Command>,
+    pub valence: Option<Box<Command>>,
 }
 
 impl Parse for DelVarChain {
@@ -28,7 +29,7 @@ impl Parse for DelVarChain {
 
             if let Some(tok) = more.peek() {
                 more.next();
-                chain.valence = Command::parse(tok, more);
+                chain.valence = Command::parse(tok, more).map(Box::new);
             }
 
             chain

@@ -4,6 +4,7 @@ use crate::parse::expression::Expression;
 use crate::parse::Parse;
 
 // IsDs the real life?
+#[derive(Clone)]
 pub struct IsDs {
     pub variable: NumericVarName,
     pub condition: Expression,

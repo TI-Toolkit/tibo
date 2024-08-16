@@ -1,6 +1,7 @@
 use titokens::{Token, Tokens};
 use crate::parse::{commands::control_flow::LabelName, expression::Expression, Parse};
 
+#[derive(Clone)]
 pub struct Menu {
     pub title: Expression,
     pub option_titles: Vec<Expression>,

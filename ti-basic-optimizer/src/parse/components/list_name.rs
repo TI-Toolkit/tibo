@@ -1,15 +1,13 @@
 use titokens::{Token, Tokens};
 
-use crate::parse::Parse;
+use crate::parse::{Parse, Reconstruct};
 
 #[derive(Copy, Clone, Debug)]
 pub enum ListName {
     Default(Token),
-    Custom {
-        /// Must match the TI-ASCII bytes for `[A-Zθ][A-Zθ0-9]{,4}`, and be zero
-        /// filled at the end.
-        name: [u8; 5],
-    },
+    /// Must match the TI-ASCII bytes for `[A-Zθ][A-Zθ0-9]{,4}`, and be zero
+    /// filled at the end.
+    Custom([u8; 5])
 }
 
 impl Parse for ListName {
@@ -46,9 +44,18 @@ impl Parse for ListName {
                     todo!()
                 }
 
-                Some(ListName::Custom { name })
+                Some(ListName::Custom(name))
             }
             _ => None,
+        }
+    }
+}
+
+impl Reconstruct for ListName {
+    fn reconstruct(&self) -> Vec<Token> {
+        match self {
+            ListName::Default(tok) => vec![*tok],
+            ListName::Custom(name) => name.iter().filter_map(|&x| (x > 0).then(|| Token::OneByte(x))).collect()
         }
     }
 }

@@ -5,13 +5,8 @@ use titokens::{Token, Tokens, Version};
 #[derive(Clone)]
 pub struct Line {
     pub tokens: Vec<Token>,
-    pub parse: Option<LineParse>,
-    original_line_number: usize,
-}
-
-#[derive(Debug, Clone)]
-pub enum LineParse {
-    Unparsed,
+    pub parse: Option<Command>,
+    pub original_line_number: usize,
 }
 
 pub struct Program {
@@ -24,7 +19,7 @@ impl Display for Program {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let tokenizer = titokens::Tokenizer::new(test_files::test_version(), "en");
         self.lines.iter().map(|line| {
-            let (line_text, _boundaries) = Tokens::from_vec(line.tokens.clone(), test_files::test_version()).to_string(&tokenizer);
+            let (line_text, _boundaries) = Tokens::from_vec(line.tokens.clone(), Some(test_files::test_version())).to_string(&tokenizer);
 
             f.write_str(&format!("\n{:0>3}: {}", line.original_line_number, line_text))
         }).collect()
@@ -74,7 +69,6 @@ impl Program {
                 tokens: line,
                 parse: None,
                 original_line_number: index,
-
             });
 
             if ended_with_newline {
