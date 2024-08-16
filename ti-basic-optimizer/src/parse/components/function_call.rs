@@ -10,8 +10,40 @@ pub struct FunctionCall {
 
 impl Parse for FunctionCall {
     fn parse(token: Token, more: &mut Tokens) -> Option<Self> {
-        matches!(token.into(),
-            0x12 | // Round
+        FunctionCall::recognize(token).then(|| {
+            let mut next = more.next().unwrap();
+
+            let mut arguments = vec![];
+            while let Some(expr) = Expression::parse(next, more) {
+                arguments.push(expr);
+
+                match more.peek() {
+                    Some(Token::OneByte(0x2B)) => { // ,
+                        more.next();
+                    }
+                    Some(Token::OneByte(0x11)) => { // )
+                        more.next();
+                        break
+                    }
+                    None => break, // :, \n, EOF
+
+                    Some(x) => panic!("Unexpected token {:?} in function call.", x)
+                }
+
+                next = more.next().unwrap();
+            }
+
+            FunctionCall {
+                kind: token,
+                arguments,
+            }
+        })
+    }
+}
+
+impl FunctionCall {
+    fn recognize(token: Token) -> bool {
+        matches!(token.into(), 0x12 | // Round
             0x13 | // PxlTest
             0x14 | // Augment
             0x15 | // RowSwap
@@ -119,33 +151,6 @@ impl Parse for FunctionCall {
             0xEF97 | // ToString
             0xEF98 | // Eval
             0xEFA6 // Piecewise
-        ).then(|| {
-            let mut next = more.next().unwrap();
-
-            let mut arguments = vec![];
-            while let Some(expr) = Expression::parse(next, more) {
-                arguments.push(expr);
-
-                match more.peek() {
-                    Some(Token::OneByte(0x2B)) => { // ,
-                        more.next().unwrap();
-                    }
-                    Some(Token::OneByte(0x11)) => { // )
-                        more.next().unwrap();
-                        break
-                    }
-                    None => break, // :, \n, EOF
-
-                    x => panic!("Unexpected token {:?} in function call.", x.unwrap())
-                }
-
-                next = more.next().unwrap();
-            }
-
-            FunctionCall {
-                kind: token,
-                arguments,
-            }
-        })
+        )
     }
 }
