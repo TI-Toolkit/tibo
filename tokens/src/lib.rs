@@ -1,6 +1,7 @@
 use std::fmt::{Debug, Formatter};
 pub use tokenizer::Tokenizer;
 pub use version::{Model, Version};
+use crate::tokenizer::TokenBoundaries;
 
 pub mod tokenizer;
 mod version;
@@ -22,7 +23,7 @@ impl Token {
     pub fn is_eol(&self) -> bool {
         matches!(
             self,
-            // EOF is for completeness, but we shouldn't encounter it.
+            // 0x00/EOF is for completeness, but we shouldn't encounter it.
             Token::OneByte(0x00 | 0x3E | 0x3F)
         )
     }
@@ -151,7 +152,11 @@ impl Tokens {
         self.pos
     }
 
-    pub fn to_string(&self, tokenizer: &Tokenizer) -> (String, Vec<usize>) {
+    pub fn to_string(&self, tokenizer: &Tokenizer) -> String {
+        tokenizer.stringify(&self.tokens).to_string()
+    }
+
+    pub fn stringify_with_boundaries(&self, tokenizer: &Tokenizer) -> TokenBoundaries {
         tokenizer.stringify(&self.tokens)
     }
 
