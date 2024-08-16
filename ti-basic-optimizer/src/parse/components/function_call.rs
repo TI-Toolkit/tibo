@@ -25,6 +25,10 @@ impl Parse for FunctionCall {
                         more.next();
                         break
                     }
+                    Some(Token::OneByte(0x04)) => { // ->
+                        break
+                    }
+
                     None => break, // :, \n, EOF
 
                     Some(x) => panic!("Unexpected token {:?} in function call.", x)
