@@ -9,7 +9,7 @@ pub enum Expression {
     Operand(Operand),
 }
 
-pub struct Builder<'a> {
+struct Builder<'a> {
     operand_stack: Vec<Expression>,
     operator_stack: Vec<Token>,
 

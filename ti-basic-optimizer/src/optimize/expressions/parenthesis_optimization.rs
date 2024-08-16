@@ -77,15 +77,13 @@ impl Expression {
 #[cfg(test)]
 mod tests {
     use test_files::load_test_data;
+    use crate::parse::Parse;
 
-    use crate::parse::expression::*;
-
+    use super::*;
     #[test]
     fn parenthesis_optimization() {
         let mut tokens = load_test_data("/snippets/parsing/formulas/parenthesis-optimization.txt");
-
-        let builder = Builder::new(&mut tokens);
-        let mut expr = builder.build();
+        let mut expr = Expression::parse(tokens.next().unwrap(), &mut tokens).unwrap();
 
         assert_eq!(expr.optimize_parentheses(), 2);
     }
