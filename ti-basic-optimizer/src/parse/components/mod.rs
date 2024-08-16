@@ -57,6 +57,8 @@ pub enum Operand {
     MatrixName(MatrixName),
     StringName(StringName),
     Ans,
+    GetKey,
+    StartTmr,
     NumericLiteral(tifloats::Float),
     StringLiteral(TIString),
     ListLiteral(TIList),
@@ -74,6 +76,8 @@ impl Parse for Operand {
                 NumericVarName::parse(token, more).map(Self::NumericVarName)
             }
             Token::OneByte(0x72) => Some(Self::Ans),
+            Token::OneByte(0xAD) => Some(Self::GetKey),
+            Token::TwoByte(0xEF, 0x0B) => Some(Self::StartTmr),
             Token::OneByte(0x2A) => TIString::parse(token, more).map(Self::StringLiteral),
             Token::OneByte(0x08) => TIList::parse(token, more).map(Self::ListLiteral),
 
