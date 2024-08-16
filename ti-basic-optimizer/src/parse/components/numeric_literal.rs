@@ -1,8 +1,8 @@
-use tifloats::{Float, tifloat};
+use tifloats::{tifloat, Float};
 
 use titokens::{Token, Tokens};
 
-use crate::parse::components::{Operand, string::TIString};
+use crate::parse::components::{string::TIString, Operand};
 use crate::parse::Parse;
 
 pub struct Builder<'a> {
@@ -142,11 +142,14 @@ impl<'a> Builder<'a> {
                     self.exponent += (digits[0] * 10 + digits[1]) as i8;
                 }
             }
-            3.. => panic!("{}", if negative {
-                "E-99 is the lowest valid exponent"
-            } else {
-                "E99 is the highest valid exponent."
-            })
+            3.. => panic!(
+                "{}",
+                if negative {
+                    "E-99 is the lowest valid exponent"
+                } else {
+                    "E99 is the highest valid exponent."
+                }
+            ),
         }
 
         if let Some(Token::OneByte(0x3A)) = self.tokens.peek() {
@@ -230,7 +233,6 @@ pub(crate) fn parse_constant(tok: Token, more: &mut Tokens) -> Option<Operand> {
         _ => None,
     }
 }
-
 
 #[cfg(test)]
 mod tests {

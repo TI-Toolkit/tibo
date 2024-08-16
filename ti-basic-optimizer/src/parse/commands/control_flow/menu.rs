@@ -1,11 +1,11 @@
-use titokens::{Token, Tokens};
 use crate::parse::{commands::control_flow::LabelName, expression::Expression, Parse};
+use titokens::{Token, Tokens};
 
 #[derive(Clone, Debug)]
 pub struct Menu {
     pub title: Expression,
     pub option_titles: Vec<Expression>,
-    pub option_labels: Vec<LabelName>
+    pub option_labels: Vec<LabelName>,
 }
 
 impl Parse for Menu {
@@ -28,25 +28,27 @@ impl Parse for Menu {
             option_labels.push(LabelName::parse(more.next().unwrap(), more).unwrap());
 
             match more.peek() {
-                Some(Token::OneByte(0x2B)) => { // ,
+                Some(Token::OneByte(0x2B)) => {
+                    // ,
                     more.next();
                 }
 
-                Some(Token::OneByte(0x11)) => { // )
+                Some(Token::OneByte(0x11)) => {
+                    // )
                     more.next();
-                    break
+                    break;
                 }
 
                 Some(Token::OneByte(0x3E | 0x3F)) | None => break, // :, \n, EOF
 
-                Some(x) => panic!("Unexpected token {:?} in menu.", x)
+                Some(x) => panic!("Unexpected token {:?} in menu.", x),
             }
         }
 
         Some(Menu {
             title,
             option_titles,
-            option_labels
+            option_labels,
         })
     }
 }
@@ -62,6 +64,9 @@ mod tests {
 
         let menu = Menu::parse(tokens.next().unwrap(), &mut tokens).unwrap();
 
-        assert_eq!(menu.option_labels, vec![LabelName(0x504C), LabelName(0x5345), LabelName(0x3000)])
+        assert_eq!(
+            menu.option_labels,
+            vec![LabelName(0x504C), LabelName(0x5345), LabelName(0x3000)]
+        )
     }
 }

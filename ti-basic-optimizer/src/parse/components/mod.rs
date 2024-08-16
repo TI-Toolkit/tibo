@@ -3,30 +3,30 @@ use titokens::{Token, Tokens};
 pub use crate::parse::components::{
     binary_operator::BinOp,
     function_call::FunctionCall,
-    list_name::ListName,
     list::TIList,
+    list_name::ListName,
     matrix_name::MatrixName,
     numeric_var_name::NumericVarName,
+    pic_image_name::{ImageName, PicName},
     string::TIString,
     string_name::StringName,
     unary_operator::UnOp,
-    pic_image_name::{ImageName, PicName}
 };
 
 use crate::parse::expression::Expression;
 use crate::parse::Parse;
 
-mod matrix_name;
-mod numeric_var_name;
-mod string_name;
-mod list_name;
-mod numeric_literal;
-mod string;
-mod function_call;
 mod binary_operator;
+mod function_call;
 mod list;
-mod unary_operator;
+mod list_name;
+mod matrix_name;
+mod numeric_literal;
+mod numeric_var_name;
 mod pic_image_name;
+mod string;
+mod string_name;
+mod unary_operator;
 
 #[derive(Clone, Debug)]
 pub enum Operator {
@@ -113,10 +113,10 @@ impl Parse for DelVarTarget {
             Token::TwoByte(0x5C, _) => MatrixName::parse(token, more).map(Self::Matrix),
             Token::TwoByte(0x5D, _) | Token::OneByte(0xEB) => {
                 ListName::parse(token, more).map(Self::List)
-            },
+            }
             Token::TwoByte(0x60, _) => PicName::parse(token, more).map(Self::Pic),
             Token::TwoByte(0xEF, _) => ImageName::parse(token, more).map(Self::Image),
-            _ => None
+            _ => None,
         }
     }
 }
@@ -140,8 +140,8 @@ impl Parse for StoreTarget {
             Token::TwoByte(0x5C, _) => MatrixName::parse(token, more).map(Self::Matrix),
             Token::TwoByte(0x5D, _) | Token::OneByte(0xEB) => {
                 ListName::parse(token, more).map(Self::List)
-            },
-            _ => None
+            }
+            _ => None,
         }
     }
 }

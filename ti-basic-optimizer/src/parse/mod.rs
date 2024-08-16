@@ -1,8 +1,8 @@
 use titokens::{Token, Tokens};
 
+pub mod commands;
 pub mod components;
 pub mod expression;
-pub mod commands;
 mod program;
 
 pub(crate) trait Parse: Sized {

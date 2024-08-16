@@ -36,10 +36,7 @@ pub fn test_version() -> titokens::Version {
     }
 }
 pub fn load_test_data(file: &str) -> titokens::Tokens {
-    let tokenizer = titokens::Tokenizer::new(
-        test_version(),
-        "en",
-    );
+    let tokenizer = titokens::Tokenizer::new(test_version(), "en");
 
     let (tokens, _boundaries) = tokenizer
         .tokenize(&std::fs::read_to_string(env!("TESTS_PATH").to_owned() + file).unwrap())

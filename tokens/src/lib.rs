@@ -1,7 +1,7 @@
+use crate::tokenizer::TokenBoundaries;
 use std::fmt::{Debug, Formatter};
 pub use tokenizer::Tokenizer;
 pub use version::{Model, Version};
-use crate::tokenizer::TokenBoundaries;
 
 pub mod tokenizer;
 mod version;

@@ -1,3 +1,3 @@
-pub mod parse;
-mod optimize;
 mod error_reporting;
+mod optimize;
+pub mod parse;

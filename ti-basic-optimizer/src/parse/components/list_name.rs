@@ -7,7 +7,7 @@ pub enum ListName {
     Default(Token),
     /// Must match the TI-ASCII bytes for `[A-Zθ][A-Zθ0-9]{,4}`, and be zero
     /// filled at the end.
-    Custom([u8; 5])
+    Custom([u8; 5]),
 }
 
 impl Parse for ListName {
@@ -55,7 +55,10 @@ impl Reconstruct for ListName {
     fn reconstruct(&self) -> Vec<Token> {
         match self {
             ListName::Default(tok) => vec![*tok],
-            ListName::Custom(name) => name.iter().filter_map(|&x| (x > 0).then(|| Token::OneByte(x))).collect()
+            ListName::Custom(name) => name
+                .iter()
+                .filter_map(|&x| (x > 0).then(|| Token::OneByte(x)))
+                .collect(),
         }
     }
 }

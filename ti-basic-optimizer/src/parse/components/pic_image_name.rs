@@ -1,6 +1,6 @@
-use titokens::{Token, Tokens};
-use crate::parse::{Parse, Reconstruct};
 use crate::parse::components::NumericVarName;
+use crate::parse::{Parse, Reconstruct};
+use titokens::{Token, Tokens};
 
 #[derive(Copy, Clone, Debug)]
 pub struct PicName(Token);

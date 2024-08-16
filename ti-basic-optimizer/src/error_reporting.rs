@@ -1,6 +1,6 @@
 use ariadne;
-use titokens::Token;
 use titokens::tokenizer::TokenBoundaries;
+use titokens::Token;
 
 #[derive(Debug, Clone)]
 pub struct LineReport {

@@ -1,5 +1,5 @@
-use titokens::{Token, Tokens};
 use crate::parse::Parse;
+use titokens::{Token, Tokens};
 
 use crate::parse::components::*;
 
@@ -37,7 +37,7 @@ impl<'a> Builder<'a> {
     pub fn build(mut self) -> Expression {
         while let Some(next) = self.tokens.next() {
             if !self.process_next(next) {
-                break
+                break;
             }
         }
 
@@ -46,15 +46,17 @@ impl<'a> Builder<'a> {
         self.finalize()
     }
 
-    fn process_next(&mut self, next: Token) -> bool{
+    fn process_next(&mut self, next: Token) -> bool {
         if !self.process_operand_stack(next) {
             match next {
-                Token::OneByte(0x10) => { // (
+                Token::OneByte(0x10) => {
+                    // (
                     self.open_paren();
                     true
                 }
 
-                Token::OneByte(0x11) if self.paren_depth > 0 => { // )
+                Token::OneByte(0x11) if self.paren_depth > 0 => {
+                    // )
                     self.close_paren();
                     true
                 }
@@ -65,16 +67,18 @@ impl<'a> Builder<'a> {
                     true
                 }
 
-                _ => if BinOp::recognize(next) {
-                    self.push_binop(next);
+                _ => {
+                    if BinOp::recognize(next) {
+                        self.push_binop(next);
 
-                    true
-                } else if UnOp::recognize(next) {
-                    self.process_operator(next);
+                        true
+                    } else if UnOp::recognize(next) {
+                        self.process_operator(next);
 
-                    true
-                } else {
-                    false
+                        true
+                    } else {
+                        false
+                    }
                 }
             }
         } else {
@@ -88,9 +92,12 @@ impl<'a> Builder<'a> {
 
             self.emit_operand(operand.clone());
 
-            if let Some(Token::OneByte(0x10)) = self.tokens.peek() { // (
+            if let Some(Token::OneByte(0x10)) = self.tokens.peek() {
+                // (
                 match &operand {
-                    Operand::ListName(_) | Operand::Ans | Operand::MatrixName(_) => unimplemented!(),
+                    Operand::ListName(_) | Operand::Ans | Operand::MatrixName(_) => {
+                        unimplemented!()
+                    }
                     _ => {}
                 }
             }
@@ -98,7 +105,8 @@ impl<'a> Builder<'a> {
             true
         } else if let Some(func) = FunctionCall::parse(next, self.tokens) {
             self.check_implicit_mul();
-            self.operand_stack.push(Expression::Operator(Operator::FunctionCall(func)));
+            self.operand_stack
+                .push(Expression::Operator(Operator::FunctionCall(func)));
             self.implicit_mul_allowed = true;
 
             true
@@ -129,7 +137,8 @@ impl<'a> Builder<'a> {
             }
         }
 
-        if matches!(self.operator_stack.last(), Some(Token::OneByte(0x10))) { // (
+        if matches!(self.operator_stack.last(), Some(Token::OneByte(0x10))) {
+            // (
             self.operator_stack.pop();
 
             self.implicit_mul_allowed = true;
@@ -151,9 +160,11 @@ impl<'a> Builder<'a> {
 
         self.implicit_mul_allowed = false;
 
-        while self.operator_stack.last().is_some_and(|tok|
-            UnOp::recognize(*tok) ||
-                (BinOp::recognize_precedence(*tok).unwrap_or(0) > precedence) // always false if not BinOp
+        while self.operator_stack.last().is_some_and(
+            |tok| {
+                UnOp::recognize(*tok)
+                    || (BinOp::recognize_precedence(*tok).unwrap_or(0) > precedence)
+            }, // always false if not BinOp
         ) {
             let token = self.operator_stack.pop().unwrap();
 
@@ -167,10 +178,11 @@ impl<'a> Builder<'a> {
         if UnOp::recognize(operator) {
             let child = self.operand_stack.pop().unwrap();
 
-            self.operand_stack.push(Expression::Operator(Operator::Unary(UnOp {
-                kind: operator,
-                child: Box::new(child),
-            })));
+            self.operand_stack
+                .push(Expression::Operator(Operator::Unary(UnOp {
+                    kind: operator,
+                    child: Box::new(child),
+                })));
 
             self.implicit_mul_allowed = false;
 
@@ -179,11 +191,12 @@ impl<'a> Builder<'a> {
             let right = self.operand_stack.pop().unwrap();
             let left = self.operand_stack.pop().unwrap();
 
-            self.operand_stack.push(Expression::Operator(Operator::Binary(BinOp {
-                kind: operator,
-                right: Box::new(right),
-                left: Box::new(left),
-            })));
+            self.operand_stack
+                .push(Expression::Operator(Operator::Binary(BinOp {
+                    kind: operator,
+                    right: Box::new(right),
+                    left: Box::new(left),
+                })));
 
             self.implicit_mul_allowed = false;
 
@@ -203,7 +216,8 @@ impl<'a> Builder<'a> {
 
     fn finalize(&mut self) -> Expression {
         while let Some(x) = self.operator_stack.pop() {
-            if !matches!(x, Token::OneByte(0x10)) { // (
+            if !matches!(x, Token::OneByte(0x10)) {
+                // (
                 self.process_operator(x);
             }
         }

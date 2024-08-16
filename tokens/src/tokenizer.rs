@@ -1,7 +1,7 @@
+use radix_trie::{Trie, TrieCommon};
 use std::collections::{BTreeMap, Bound};
 use std::fmt::{Display, Formatter};
 use std::ops::{Range, RangeBounds};
-use radix_trie::{Trie, TrieCommon};
 
 use crate::{Token, Tokens, Version};
 
@@ -29,7 +29,7 @@ impl TokenBoundaries {
         if idx == 0 {
             0..self.boundaries[idx]
         } else {
-            self.boundaries[idx-1]..self.boundaries[idx]
+            self.boundaries[idx - 1]..self.boundaries[idx]
         }
     }
 
@@ -44,17 +44,20 @@ impl TokenBoundaries {
     /// let (tokens, boundaries) = tokenizer.tokenize(source).unwrap();
     /// assert_eq!(boundaries.range(..=2), 0..7);
     /// ```
-    pub fn range<T>(&self, range: T) -> Range<usize> where T: RangeBounds<usize> {
+    pub fn range<T>(&self, range: T) -> Range<usize>
+    where
+        T: RangeBounds<usize>,
+    {
         let start = match range.start_bound() {
             Bound::Included(x) => self.single(*x).start,
             Bound::Excluded(x) => self.single(*x).end,
-            Bound::Unbounded => 0
+            Bound::Unbounded => 0,
         };
 
         let end = match range.end_bound() {
             Bound::Included(x) => self.single(*x).end,
             Bound::Excluded(x) => self.single(*x).start,
-            Bound::Unbounded => *self.boundaries.last().unwrap_or(&0)
+            Bound::Unbounded => *self.boundaries.last().unwrap_or(&0),
         };
 
         start..end
@@ -113,7 +116,7 @@ impl Tokenizer {
             Tokens::from_vec(result, Some(self.version.clone())),
             TokenBoundaries {
                 text: text.to_string(),
-                boundaries
+                boundaries,
             },
         ))
     }
@@ -136,7 +139,7 @@ impl Tokenizer {
 
         TokenBoundaries {
             text: strings.join(""),
-            boundaries
+            boundaries,
         }
     }
 }

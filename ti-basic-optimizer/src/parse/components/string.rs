@@ -11,9 +11,7 @@ pub struct TIString {
 
 impl TIString {
     pub fn new(data: Vec<Token>) -> Self {
-        TIString {
-            data,
-        }
+        TIString { data }
     }
 
     pub fn is_empty(&self) -> bool {
@@ -29,9 +27,13 @@ impl TIString {
 impl Parse for TIString {
     fn parse(token: Token, more: &mut Tokens) -> Option<Self> {
         matches!(token, Token::OneByte(0x2A)).then(|| {
-            let data: Vec<Token> = more.peeking_take_while(|tok| !matches!(tok, Token::OneByte(0x04 | 0x3F | 0x2A))).collect(); // ->, \n, "
+            let data: Vec<Token> = more
+                .peeking_take_while(|tok| !matches!(tok, Token::OneByte(0x04 | 0x3F | 0x2A))) // ->, \n, "
+                .collect();
             match more.peek() {
-                Some(Token::OneByte(0x2A)) => { more.next(); }
+                Some(Token::OneByte(0x2A)) => {
+                    more.next();
+                }
                 _ => {}
             }
 
@@ -57,9 +59,13 @@ mod tests {
     fn parse_quote_terminated_string() {
         use test_files;
 
-        let mut tokens = test_files::load_test_data("/snippets/parsing/strings/quote-terminated.txt");
+        let mut tokens =
+            test_files::load_test_data("/snippets/parsing/strings/quote-terminated.txt");
         let result = TIString::parse(tokens.next().unwrap(), &mut tokens).unwrap();
-        assert!(!result.data.iter().any(|&t| matches!(t, Token::OneByte(0x2A))));
+        assert!(!result
+            .data
+            .iter()
+            .any(|&t| matches!(t, Token::OneByte(0x2A))));
         assert_eq!(result.data.len(), 13);
     }
 }

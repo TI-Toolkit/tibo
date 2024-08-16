@@ -1,7 +1,7 @@
-use titokens::{Token, Tokens};
 use crate::parse::components::NumericVarName;
 use crate::parse::expression::Expression;
 use crate::parse::Parse;
+use titokens::{Token, Tokens};
 
 // IsDs the real life?
 #[derive(Clone, Debug)]

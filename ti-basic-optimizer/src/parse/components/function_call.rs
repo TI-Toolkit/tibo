@@ -1,11 +1,11 @@
-use titokens::{Token, Tokens};
 use crate::parse::expression::Expression;
 use crate::parse::Parse;
+use titokens::{Token, Tokens};
 
 #[derive(Clone, Debug)]
 pub struct FunctionCall {
     pub kind: Token,
-    pub arguments: Vec<Expression>
+    pub arguments: Vec<Expression>,
 }
 
 impl Parse for FunctionCall {
@@ -18,20 +18,23 @@ impl Parse for FunctionCall {
                 arguments.push(expr);
 
                 match more.peek() {
-                    Some(Token::OneByte(0x2B)) => { // ,
+                    Some(Token::OneByte(0x2B)) => {
+                        // ,
                         more.next();
                     }
-                    Some(Token::OneByte(0x11)) => { // )
+                    Some(Token::OneByte(0x11)) => {
+                        // )
                         more.next();
-                        break
+                        break;
                     }
-                    Some(Token::OneByte(0x04)) => { // ->
-                        break
+                    Some(Token::OneByte(0x04)) => {
+                        // ->
+                        break;
                     }
 
                     Some(Token::OneByte(0x3E | 0x3F)) | None => break, // :, \n, EOF
 
-                    Some(x) => panic!("Unexpected token {:?} in function call.", x)
+                    Some(x) => panic!("Unexpected token {:?} in function call.", x),
                 }
 
                 next = more.next().unwrap();
@@ -47,7 +50,9 @@ impl Parse for FunctionCall {
 
 impl FunctionCall {
     fn recognize(token: Token) -> bool {
-        matches!(token.into(), 0x12 | // Round
+        matches!(
+            token.into(),
+            0x12 | // Round
             0x13 | // PxlTest
             0x14 | // Augment
             0x15 | // RowSwap

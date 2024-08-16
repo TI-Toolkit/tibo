@@ -6,9 +6,9 @@ pub use control_flow::ControlFlow;
 pub use delvar_chain::DelVarChain;
 pub use generic::Generic;
 
-use crate::parse::{Parse, expression::Expression};
-use titokens::{Token, Tokens};
 use crate::parse::components::StoreTarget;
+use crate::parse::{expression::Expression, Parse};
+use titokens::{Token, Tokens};
 
 #[derive(Clone, Debug)]
 pub enum Command {
@@ -29,7 +29,10 @@ impl Parse for Command {
                 if expr.is_some() && more.peek() == Some(Token::OneByte(0x04)) {
                     more.next();
 
-                    Some(Command::Store(expr.unwrap(), StoreTarget::parse(more.next().unwrap(), more).unwrap()))
+                    Some(Command::Store(
+                        expr.unwrap(),
+                        StoreTarget::parse(more.next().unwrap(), more).unwrap(),
+                    ))
                 } else {
                     expr.map(Command::Expression)
                 }

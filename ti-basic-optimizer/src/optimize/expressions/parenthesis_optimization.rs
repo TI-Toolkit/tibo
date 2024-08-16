@@ -76,8 +76,8 @@ impl Expression {
 
 #[cfg(test)]
 mod tests {
-    use test_files::load_test_data;
     use crate::parse::Parse;
+    use test_files::load_test_data;
 
     use super::*;
     #[test]

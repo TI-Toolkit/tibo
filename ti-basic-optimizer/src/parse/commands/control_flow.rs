@@ -1,8 +1,12 @@
 mod for_loop;
-mod menu;
 mod isds;
+mod menu;
 
-use crate::parse::{expression::Expression, Parse, commands::control_flow::{for_loop::ForLoop, menu::Menu, isds::IsDs}};
+use crate::parse::{
+    commands::control_flow::{for_loop::ForLoop, isds::IsDs, menu::Menu},
+    expression::Expression,
+    Parse,
+};
 use titokens::{Token, Tokens};
 
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
@@ -51,13 +55,21 @@ impl Parse for ControlFlow {
         match token {
             Token::OneByte(0xCE) => Some(CF::If(Expr::parse(more.next().unwrap(), more).unwrap())),
             Token::OneByte(0xCF) => Some(CF::Then),
-            Token::OneByte(0xD1) => Some(CF::While(Expr::parse(more.next().unwrap(), more).unwrap())),
-            Token::OneByte(0xD2) => Some(CF::Repeat(Expr::parse(more.next().unwrap(), more).unwrap())),
+            Token::OneByte(0xD1) => {
+                Some(CF::While(Expr::parse(more.next().unwrap(), more).unwrap()))
+            }
+            Token::OneByte(0xD2) => {
+                Some(CF::Repeat(Expr::parse(more.next().unwrap(), more).unwrap()))
+            }
             Token::OneByte(0xD3) => Some(CF::For(ForLoop::parse(token, more).unwrap())),
             Token::OneByte(0xD4) => Some(CF::End),
             Token::OneByte(0xD5) => Some(CF::Return),
-            Token::OneByte(0xD6) => Some(CF::Lbl(LabelName::parse(more.next().unwrap(), more).unwrap())),
-            Token::OneByte(0xD7) => Some(CF::Goto(LabelName::parse(more.next().unwrap(), more).unwrap())),
+            Token::OneByte(0xD6) => Some(CF::Lbl(
+                LabelName::parse(more.next().unwrap(), more).unwrap(),
+            )),
+            Token::OneByte(0xD7) => Some(CF::Goto(
+                LabelName::parse(more.next().unwrap(), more).unwrap(),
+            )),
             Token::OneByte(0xD9) => Some(CF::Stop),
             Token::OneByte(0xDA) => Some(CF::IsGt(IsDs::parse(token, more).unwrap())),
             Token::OneByte(0xDB) => Some(CF::DsLt(IsDs::parse(token, more).unwrap())),

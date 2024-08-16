@@ -1,6 +1,6 @@
-use titokens::Token;
 use crate::parse::components::OperatorKind;
 use crate::parse::expression::Expression;
+use titokens::Token;
 
 #[derive(Clone, Debug)]
 pub struct UnOp {
@@ -10,7 +10,8 @@ pub struct UnOp {
 
 impl OperatorKind for UnOp {
     fn recognize(token: Token) -> bool {
-        matches!(token,
+        matches!(
+            token,
             Token::OneByte(0xB0) | // Negate
             Token::OneByte(0x0A..=0x0F) | // Radian, Reciprocal, Squared, Transpose, Cubed
             Token::OneByte(0x2D) | // Factorial
