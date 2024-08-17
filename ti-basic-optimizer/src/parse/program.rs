@@ -1,13 +1,38 @@
 use crate::error_reporting::LineReport;
 use crate::parse::commands::Command;
 use crate::parse::Parse;
-use titokens::{tokenizer, Token, Tokenizer, Tokens};
+use titokens::{tokenizer, Token, Tokenizer, Tokens, Version};
 
 pub struct Program {
     lines: Vec<Command>,
 }
 
 impl Program {
+    pub fn from_text(text: &str, version: Version) -> Self {
+        let tokenizer = Tokenizer::new(version, "en");
+        if let Ok((mut tokens, boundaries)) = tokenizer.tokenize(text) {
+            match Program::parse(&mut tokens) {
+                Ok(prog) => prog,
+                Err(report) => {
+                    report.error(boundaries);
+
+                    if cfg!(test) {
+                        panic!("Error thrown; aborting.");
+                    } else {
+                        std::process::exit(1);
+                    }
+                }
+            }
+        } else {
+            eprintln!("Failed to tokenize input file.");
+            if cfg!(test) {
+                panic!("Error thrown; aborting.");
+            } else {
+                std::process::exit(1);
+            }
+        }
+    }
+
     pub fn from_tokens(tokens: &mut Tokens, tokenizer: &Tokenizer) -> Self {
         match Program::parse(tokens) {
             Ok(prog) => prog,

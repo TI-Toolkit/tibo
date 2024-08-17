@@ -111,6 +111,15 @@ pub struct Version {
     pub os_version: String,
 }
 
+impl Version {
+    pub fn latest() -> Self {
+        Version {
+            model: Model::LATEST,
+            os_version: "9.99.99".to_string(),
+        }
+    }
+}
+
 fn cmp_os_version(a: &str, b: &str) -> Ordering {
     a.split('.')
         .map(|n| str::parse::<u64>(n).unwrap())
