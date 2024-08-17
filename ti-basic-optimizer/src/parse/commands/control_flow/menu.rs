@@ -40,6 +40,7 @@ impl Parse for Menu {
             option_labels.push(expect_some!(
                 LabelName::parse(next_or_err!(more, "Expected a label name.")?, more)?,
                 more,
+                "a label name",
                 "Each menu option must have a valid label."
             )?);
 
