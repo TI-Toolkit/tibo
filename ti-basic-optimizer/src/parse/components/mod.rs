@@ -1,6 +1,7 @@
 use crate::error_reporting::LineReport;
 pub use crate::parse::components::{
     binary_operator::BinOp,
+    equation_name::EquationName,
     function_call::FunctionCall,
     list::TIList,
     list_name::ListName,
@@ -10,13 +11,14 @@ pub use crate::parse::components::{
     string::TIString,
     string_name::StringName,
     unary_operator::UnOp,
+    window_var_name::WindowVarName,
 };
-use titokens::{Token, Tokens};
-
 use crate::parse::expression::Expression;
 use crate::parse::Parse;
+use titokens::{Token, Tokens};
 
 mod binary_operator;
+mod equation_name;
 mod function_call;
 mod list;
 mod list_name;
@@ -27,6 +29,7 @@ mod pic_image_name;
 mod string;
 mod string_name;
 mod unary_operator;
+mod window_var_name;
 
 #[derive(Clone, Debug)]
 pub enum Operator {
@@ -58,10 +61,13 @@ pub enum Operand {
     StringName(StringName),
     Ans,
     GetKey,
+    GetDate,
     StartTmr,
     NumericLiteral(tifloats::Float),
     StringLiteral(TIString),
     ListLiteral(TIList),
+    TblInput,
+    WindowVarName(WindowVarName),
     /// for expr and seq and such
     Expression(Box<Expression>),
 }
@@ -77,6 +83,7 @@ impl Parse for Operand {
             }
             Token::OneByte(0x72) => Ok(Some(Self::Ans)),
             Token::OneByte(0xAD) => Ok(Some(Self::GetKey)),
+            Token::TwoByte(0xEF, 0x09) => Ok(Some(Self::GetDate)),
             Token::TwoByte(0xEF, 0x0B) => Ok(Some(Self::StartTmr)),
             Token::OneByte(0x2A) => Ok(TIString::parse(token, more)?.map(Self::StringLiteral)),
             Token::OneByte(0x08) => Ok(TIList::parse(token, more)?.map(Self::ListLiteral)),
@@ -86,7 +93,10 @@ impl Parse for Operand {
             Token::TwoByte(0x5D, _) | Token::OneByte(0xEB) => {
                 Ok(ListName::parse(token, more)?.map(Self::ListName))
             }
-
+            Token::TwoByte(0x63, 0x2A) => Ok(Some(Self::TblInput)),
+            Token::TwoByte(0x63, 0x00..=0x2A | 0x32..=0x38) => {
+                Ok(WindowVarName::parse(token, more)?.map(Self::WindowVarName))
+            }
             _ => Ok(numeric_literal::parse_constant(token, more)),
         }
     }
@@ -100,7 +110,8 @@ pub enum DelVarTarget {
     String(StringName),
     Pic(PicName),
     Image(ImageName),
-    // + yvars, GDBs
+    // GDBs
+    Equation(EquationName),
 }
 
 impl Parse for DelVarTarget {
@@ -116,6 +127,7 @@ impl Parse for DelVarTarget {
             }
             Token::TwoByte(0x60, _) => Ok(PicName::parse(token, more)?.map(Self::Pic)),
             Token::TwoByte(0xEF, _) => Ok(ImageName::parse(token, more)?.map(Self::Image)),
+            Token::TwoByte(0x5E, _) => Ok(EquationName::parse(token, more)?.map(Self::Equation)),
             _ => Ok(None),
         }
     }
@@ -128,6 +140,8 @@ pub enum StoreTarget {
     Matrix(MatrixName),
     String(StringName),
     // ListAccess, ArrayAccess
+    Equation(EquationName),
+    WindowVar(WindowVarName),
 }
 
 impl Parse for StoreTarget {
@@ -140,6 +154,10 @@ impl Parse for StoreTarget {
             Token::TwoByte(0x5C, _) => Ok(MatrixName::parse(token, more)?.map(Self::Matrix)),
             Token::TwoByte(0x5D, _) | Token::OneByte(0xEB) => {
                 Ok(ListName::parse(token, more)?.map(Self::List))
+            }
+            Token::TwoByte(0x5E, _) => Ok(EquationName::parse(token, more)?.map(Self::Equation)),
+            Token::TwoByte(0x63, 0x00..=0x2A | 0x32..=0x38) => {
+                Ok(WindowVarName::parse(token, more)?.map(Self::WindowVar))
             }
             _ => Ok(None),
         }
