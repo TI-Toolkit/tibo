@@ -38,7 +38,9 @@ impl Parse for Command {
                     expect_some!(
                         StoreTarget::parse(next_or_err!(more)?, more)?,
                         more,
-                        "a store target"
+                        1,
+                        "a store target",
+                        "This cannot be stored to with a store arrow."
                     )
                     .map_err(|x| {
                         x.with_label(more.current_position() - 2, "Store arrow is here.")

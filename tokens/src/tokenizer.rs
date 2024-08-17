@@ -1,6 +1,6 @@
 use radix_trie::{Trie, TrieCommon};
 use std::collections::{BTreeMap, Bound};
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Range, RangeBounds};
 
 use crate::{Token, Tokens, Version};
@@ -62,10 +62,36 @@ impl TokenBoundaries {
 
         start..end
     }
+
+    pub fn str_at_single(&self, idx: usize) -> String {
+        let single = self.single(idx);
+
+        self.text[single].to_string()
+    }
+
+    pub fn str_at_range<T>(&self, range: T) -> String
+    where
+        T: RangeBounds<usize>,
+    {
+        let range = self.range(range);
+
+        self.text[range].to_string()
+    }
 }
+
 impl Display for TokenBoundaries {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.text)
+    }
+}
+
+impl Debug for TokenBoundaries {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(
+            &(0..self.boundaries.len())
+                .map(|idx| format!("{}\n", self.str_at_single(idx)))
+                .collect::<String>(),
+        )
     }
 }
 
@@ -81,7 +107,11 @@ impl Tokenizer {
         let mut trie = Trie::new();
 
         crate::xmlparse::DATA.iter().for_each(|(key, value)| {
-            names.insert(*key, value.at(&version, lang_code).display.clone());
+            if cfg!(unicode) {
+                names.insert(*key, value.at(&version, lang_code).display.clone());
+            } else {
+                names.insert(*key, value.at(&version, lang_code).accessible.clone());
+            }
             trie.insert(value.at(&version, lang_code).accessible.clone(), *key);
         });
 
@@ -175,5 +205,35 @@ mod tests {
 
         assert_eq!(boundaries.single(1), 8..9);
         assert_eq!(boundaries.range(2..=3), 9..13);
+    }
+
+    #[test]
+    fn stringify_with_boundaries() {
+        let tokenizer = Tokenizer::new(
+            Version {
+                model: crate::Model::TI84PCE,
+                os_version: "5.3.0".to_string(),
+            },
+            "en",
+        );
+
+        let tokens = Tokens::from_vec(
+            vec![
+                Token::OneByte(0x3F),
+                Token::TwoByte(0xBB, 0x0A),
+                Token::OneByte(0x58),
+                Token::OneByte(0x0D),
+                Token::OneByte(0x2B),
+                Token::OneByte(0x59),
+                Token::OneByte(0x04),
+                Token::OneByte(0x41),
+            ],
+            None,
+        );
+
+        let boundaries = tokens.stringify_with_boundaries(&tokenizer);
+
+        assert_eq!(boundaries.single(0), 0..1);
+        assert_eq!(boundaries.single(2), 9..10);
     }
 }

@@ -1,4 +1,5 @@
 use ariadne;
+use std::ops::Range;
 use titokens::tokenizer::TokenBoundaries;
 
 macro_rules! next_or_err {
@@ -15,8 +16,12 @@ macro_rules! next_or_err {
 
     ($tokens: ident, $message: literal) => {
         $tokens.next().ok_or_else(|| {
-            (crate::error_reporting::LineReport::new($tokens.current_position() - 2, $message, None)
-                .with_label($tokens.current_position() - 2, "here"))
+            (crate::error_reporting::LineReport::new(
+                $tokens.current_position() - 2,
+                $message,
+                None,
+            )
+            .with_label($tokens.current_position() - 2, "here"))
         })
     };
 }
@@ -94,12 +99,27 @@ pub(crate) use expect_tok;
 pub(crate) use next_or_err;
 
 #[derive(Debug, Clone)]
+enum LabelKind {
+    Single(usize),
+    Span(Range<usize>),
+}
+
+impl LabelKind {
+    pub fn string_indices(&self, token_boundaries: &TokenBoundaries) -> Range<usize> {
+        match self {
+            LabelKind::Single(tok_idx) => token_boundaries.single(*tok_idx),
+            LabelKind::Span(tok_range) => token_boundaries.range(tok_range.clone()),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct LineReport {
     location: usize,
     message: String,
     suggestion: Option<String>,
 
-    labels: Vec<(std::ops::Range<usize>, String)>,
+    labels: Vec<(LabelKind, String)>,
 }
 
 impl LineReport {
@@ -116,14 +136,16 @@ impl LineReport {
 
     #[must_use]
     pub fn with_span_label(mut self, location: std::ops::Range<usize>, message: &str) -> Self {
-        self.labels.push((location, message.to_string()));
+        self.labels
+            .push((LabelKind::Span(location), message.to_string()));
 
         self
     }
 
     #[must_use]
     pub fn with_label(mut self, location: usize, message: &str) -> Self {
-        self.labels.push((location..location, message.to_string()));
+        self.labels
+            .push((LabelKind::Single(location), message.to_string()));
 
         self
     }
@@ -141,8 +163,8 @@ impl LineReport {
                 ariadne::Label::new(boundaries.single(self.location)).with_message("here"),
             );
         } else {
-            builder = builder.with_labels(self.labels.iter().map(|(range, message)| {
-                ariadne::Label::new(boundaries.range(range.start..range.end)).with_message(message)
+            builder = builder.with_labels(self.labels.iter().map(|(label_kind, message)| {
+                ariadne::Label::new(label_kind.string_indices(&boundaries)).with_message(message)
             }))
         }
 

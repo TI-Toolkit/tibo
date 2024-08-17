@@ -8,6 +8,7 @@ description = "TI-Toolkit token sheet parsing."
 [features]
 itertools = ["dep:itertools"]
 deku-8xp = ["dep:deku"]
+unicode = []
 
 [dependencies]
 lazy_static = "1.5.0"
