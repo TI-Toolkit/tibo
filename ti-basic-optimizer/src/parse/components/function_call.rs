@@ -1,3 +1,4 @@
+use crate::error_reporting::LineReport;
 use crate::parse::expression::Expression;
 use crate::parse::Parse;
 use titokens::{Token, Tokens};
@@ -9,12 +10,14 @@ pub struct FunctionCall {
 }
 
 impl Parse for FunctionCall {
-    fn parse(token: Token, more: &mut Tokens) -> Option<Self> {
-        FunctionCall::recognize(token).then(|| {
-            let mut next = more.next().unwrap();
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+        if !FunctionCall::recognize(token) {
+            return Ok(None);
+        }
 
-            let mut arguments = vec![];
-            while let Some(expr) = Expression::parse(next, more) {
+        let mut arguments = vec![];
+        if let Some(mut next) = more.next() {
+            while let Some(expr) = Expression::parse(next, more)? {
                 arguments.push(expr);
 
                 match more.peek() {
@@ -34,17 +37,22 @@ impl Parse for FunctionCall {
 
                     Some(Token::OneByte(0x3E | 0x3F)) | None => break, // :, \n, EOF
 
-                    Some(x) => panic!("Unexpected token {:?} in function call.", x),
+                    Some(x) => Err(LineReport::new(
+                        more.current_position() - 1,
+                        "Unexpected character in function call",
+                        Some("perhaps it's unimplemented?"),
+                    )
+                    .with_label(more.current_position() - 1, "here"))?,
                 }
 
                 next = more.next().unwrap();
             }
+        }
 
-            FunctionCall {
-                kind: token,
-                arguments,
-            }
-        })
+        Ok(Some(FunctionCall {
+            kind: token,
+            arguments,
+        }))
     }
 }
 

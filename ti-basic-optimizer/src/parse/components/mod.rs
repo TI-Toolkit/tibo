@@ -1,5 +1,4 @@
-use titokens::{Token, Tokens};
-
+use crate::error_reporting::LineReport;
 pub use crate::parse::components::{
     binary_operator::BinOp,
     function_call::FunctionCall,
@@ -12,6 +11,7 @@ pub use crate::parse::components::{
     string_name::StringName,
     unary_operator::UnOp,
 };
+use titokens::{Token, Tokens};
 
 use crate::parse::expression::Expression;
 use crate::parse::Parse;
@@ -67,27 +67,27 @@ pub enum Operand {
 }
 
 impl Parse for Operand {
-    fn parse(token: Token, more: &mut Tokens) -> Option<Self> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
         match token {
             Token::OneByte(0x30..=0x39 | 0x3A | 0x3B) => {
-                tifloats::Float::parse(token, more).map(Self::NumericLiteral)
+                Ok(tifloats::Float::parse(token, more)?.map(Self::NumericLiteral))
             }
             Token::OneByte(0x41..=0x5B) | Token::TwoByte(0x62, 0x21) => {
-                NumericVarName::parse(token, more).map(Self::NumericVarName)
+                Ok(NumericVarName::parse(token, more)?.map(Self::NumericVarName))
             }
-            Token::OneByte(0x72) => Some(Self::Ans),
-            Token::OneByte(0xAD) => Some(Self::GetKey),
-            Token::TwoByte(0xEF, 0x0B) => Some(Self::StartTmr),
-            Token::OneByte(0x2A) => TIString::parse(token, more).map(Self::StringLiteral),
-            Token::OneByte(0x08) => TIList::parse(token, more).map(Self::ListLiteral),
+            Token::OneByte(0x72) => Ok(Some(Self::Ans)),
+            Token::OneByte(0xAD) => Ok(Some(Self::GetKey)),
+            Token::TwoByte(0xEF, 0x0B) => Ok(Some(Self::StartTmr)),
+            Token::OneByte(0x2A) => Ok(TIString::parse(token, more)?.map(Self::StringLiteral)),
+            Token::OneByte(0x08) => Ok(TIList::parse(token, more)?.map(Self::ListLiteral)),
 
-            Token::TwoByte(0xAA, _) => StringName::parse(token, more).map(Self::StringName),
-            Token::TwoByte(0x5C, _) => MatrixName::parse(token, more).map(Self::MatrixName),
+            Token::TwoByte(0xAA, _) => Ok(StringName::parse(token, more)?.map(Self::StringName)),
+            Token::TwoByte(0x5C, _) => Ok(MatrixName::parse(token, more)?.map(Self::MatrixName)),
             Token::TwoByte(0x5D, _) | Token::OneByte(0xEB) => {
-                ListName::parse(token, more).map(Self::ListName)
+                Ok(ListName::parse(token, more)?.map(Self::ListName))
             }
 
-            _ => numeric_literal::parse_constant(token, more),
+            _ => Ok(numeric_literal::parse_constant(token, more)),
         }
     }
 }
@@ -104,19 +104,19 @@ pub enum DelVarTarget {
 }
 
 impl Parse for DelVarTarget {
-    fn parse(token: Token, more: &mut Tokens) -> Option<Self> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
         match token {
             Token::OneByte(0x41..=0x5B) | Token::TwoByte(0x62, 0x21) => {
-                NumericVarName::parse(token, more).map(Self::NumericVar)
+                Ok(NumericVarName::parse(token, more)?.map(Self::NumericVar))
             }
-            Token::TwoByte(0xAA, _) => StringName::parse(token, more).map(Self::String),
-            Token::TwoByte(0x5C, _) => MatrixName::parse(token, more).map(Self::Matrix),
+            Token::TwoByte(0xAA, _) => Ok(StringName::parse(token, more)?.map(Self::String)),
+            Token::TwoByte(0x5C, _) => Ok(MatrixName::parse(token, more)?.map(Self::Matrix)),
             Token::TwoByte(0x5D, _) | Token::OneByte(0xEB) => {
-                ListName::parse(token, more).map(Self::List)
+                Ok(ListName::parse(token, more)?.map(Self::List))
             }
-            Token::TwoByte(0x60, _) => PicName::parse(token, more).map(Self::Pic),
-            Token::TwoByte(0xEF, _) => ImageName::parse(token, more).map(Self::Image),
-            _ => None,
+            Token::TwoByte(0x60, _) => Ok(PicName::parse(token, more)?.map(Self::Pic)),
+            Token::TwoByte(0xEF, _) => Ok(ImageName::parse(token, more)?.map(Self::Image)),
+            _ => Ok(None),
         }
     }
 }
@@ -131,17 +131,17 @@ pub enum StoreTarget {
 }
 
 impl Parse for StoreTarget {
-    fn parse(token: Token, more: &mut Tokens) -> Option<Self> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
         match token {
             Token::OneByte(0x41..=0x5B) | Token::TwoByte(0x62, 0x21) => {
-                NumericVarName::parse(token, more).map(Self::NumericVar)
+                Ok(NumericVarName::parse(token, more)?.map(Self::NumericVar))
             }
-            Token::TwoByte(0xAA, _) => StringName::parse(token, more).map(Self::String),
-            Token::TwoByte(0x5C, _) => MatrixName::parse(token, more).map(Self::Matrix),
+            Token::TwoByte(0xAA, _) => Ok(StringName::parse(token, more)?.map(Self::String)),
+            Token::TwoByte(0x5C, _) => Ok(MatrixName::parse(token, more)?.map(Self::Matrix)),
             Token::TwoByte(0x5D, _) | Token::OneByte(0xEB) => {
-                ListName::parse(token, more).map(Self::List)
+                Ok(ListName::parse(token, more)?.map(Self::List))
             }
-            _ => None,
+            _ => Ok(None),
         }
     }
 }

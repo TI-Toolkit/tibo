@@ -15,7 +15,11 @@ impl Program {
                 let boundaries = tokens.stringify_with_boundaries(tokenizer);
                 report.error(boundaries);
 
-                std::process::exit(1);
+                if cfg!(test) {
+                    panic!("Error thrown; aborting.");
+                } else {
+                    std::process::exit(1);
+                }
             }
         }
     }
@@ -34,7 +38,7 @@ impl Program {
                 _ => {}
             }
 
-            if let Some(command) = Command::parse(next, tokens) {
+            if let Some(command) = Command::parse(next, tokens)? {
                 lines.push(command);
             }
 
@@ -78,6 +82,7 @@ mod tests {
     #[test]
     fn parse() {
         let mut tokens = load_test_data("/programs/bouncy_ball/raw.txt");
-        let program = Program::from_tokens(&mut tokens, &Tokenizer::new(test_version(), "en"));
+        let tokenizer = Tokenizer::new(test_version(), "en");
+        let program = Program::from_tokens(&mut tokens, &tokenizer);
     }
 }

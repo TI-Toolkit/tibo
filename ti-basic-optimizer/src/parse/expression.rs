@@ -1,7 +1,7 @@
+use crate::error_reporting::LineReport;
+use crate::parse::components::*;
 use crate::parse::Parse;
 use titokens::{Token, Tokens};
-
-use crate::parse::components::*;
 
 #[derive(Debug, Clone)]
 pub enum Expression {
@@ -33,10 +33,9 @@ impl<'a> Builder<'a> {
         }
     }
 
-    #[must_use]
-    pub fn build(mut self) -> Expression {
+    pub fn build(mut self) -> Result<Option<Expression>, LineReport> {
         while let Some(next) = self.tokens.next() {
-            if !self.process_next(next) {
+            if !self.process_next(next)? {
                 break;
             }
         }
@@ -46,48 +45,48 @@ impl<'a> Builder<'a> {
         self.finalize()
     }
 
-    fn process_next(&mut self, next: Token) -> bool {
-        if !self.process_operand_stack(next) {
+    fn process_next(&mut self, next: Token) -> Result<bool, LineReport> {
+        if !self.process_operand_stack(next)? {
             match next {
                 Token::OneByte(0x10) => {
                     // (
                     self.open_paren();
-                    true
+                    Ok(true)
                 }
 
                 Token::OneByte(0x11) if self.paren_depth > 0 => {
                     // )
                     self.close_paren();
-                    true
+                    Ok(true)
                 }
 
                 Token::OneByte(0xB0) => {
                     self.operator_stack.push(next);
 
-                    true
+                    Ok(true)
                 }
 
                 _ => {
                     if BinOp::recognize(next) {
                         self.push_binop(next);
 
-                        true
+                        Ok(true)
                     } else if UnOp::recognize(next) {
                         self.process_operator(next);
 
-                        true
+                        Ok(true)
                     } else {
-                        false
+                        Ok(false)
                     }
                 }
             }
         } else {
-            true
+            Ok(true)
         }
     }
 
-    fn process_operand_stack(&mut self, next: Token) -> bool {
-        if let Some(operand) = Operand::parse(next, self.tokens) {
+    fn process_operand_stack(&mut self, next: Token) -> Result<bool, LineReport> {
+        if let Some(operand) = Operand::parse(next, self.tokens)? {
             self.check_implicit_mul();
 
             self.emit_operand(operand.clone());
@@ -102,16 +101,16 @@ impl<'a> Builder<'a> {
                 }
             }
 
-            true
-        } else if let Some(func) = FunctionCall::parse(next, self.tokens) {
+            Ok(true)
+        } else if let Some(func) = FunctionCall::parse(next, self.tokens)? {
             self.check_implicit_mul();
             self.operand_stack
                 .push(Expression::Operator(Operator::FunctionCall(func)));
             self.implicit_mul_allowed = true;
 
-            true
+            Ok(true)
         } else {
-            false
+            Ok(false)
         }
     }
 
@@ -214,7 +213,7 @@ impl<'a> Builder<'a> {
         todo!();
     }
 
-    fn finalize(&mut self) -> Expression {
+    fn finalize(&mut self) -> Result<Option<Expression>, LineReport> {
         while let Some(x) = self.operator_stack.pop() {
             if !matches!(x, Token::OneByte(0x10)) {
                 // (
@@ -222,18 +221,26 @@ impl<'a> Builder<'a> {
             }
         }
 
+        if !self.valid() {
+            Err(LineReport::new(
+                self.tokens.current_position(),
+                "Expression parsing error",
+                Some("Please report this!"),
+            ))?;
+        }
+
         assert!(self.valid());
 
-        self.operand_stack[0].clone()
+        Ok(self.operand_stack.get(0).cloned())
     }
 }
 
 impl Parse for Expression {
-    fn parse(token: Token, more: &mut Tokens) -> Option<Self> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+        more.backtrack_once();
         let mut builder = Builder::new(more);
-        builder.process_next(token);
 
-        Some(builder.build())
+        builder.build()
     }
 }
 
@@ -271,8 +278,11 @@ mod tests {
         let mut tokens = load_test_data("/snippets/parsing/function-parsing/function-closing.txt");
 
         let builder = Builder::new(&mut tokens);
-        let expr = builder.build();
+        let expr = builder.build().ok().unwrap();
 
-        assert!(matches!(expr, Expression::Operator(Operator::Binary(_))));
+        assert!(matches!(
+            expr,
+            Some(Expression::Operator(Operator::Binary(_)))
+        ));
     }
 }

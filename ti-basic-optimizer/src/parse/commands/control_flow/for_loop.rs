@@ -1,3 +1,4 @@
+use crate::error_reporting::{expect_some, expect_tok, next_or_err, LineReport};
 use crate::parse::expression::Expression;
 use crate::parse::Parse;
 use titokens::{Token, Tokens};
@@ -11,33 +12,59 @@ pub struct ForLoop {
 }
 
 impl Parse for ForLoop {
-    fn parse(token: Token, more: &mut Tokens) -> Option<Self> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
         if token != Token::OneByte(0xD3) {
-            return None;
+            return Ok(None);
         }
 
-        let iterator = Expression::parse(more.next().unwrap(), more).unwrap();
-        assert_eq!(more.next(), Some(Token::OneByte(0x2B))); // ,
-        let start = Expression::parse(more.next().unwrap(), more).unwrap();
-        assert_eq!(more.next(), Some(Token::OneByte(0x2B)));
-        let end = Expression::parse(more.next().unwrap(), more).unwrap();
+        let iterator = expect_some!(
+            Expression::parse(next_or_err!(more)?, more)?,
+            more,
+            "an expression"
+        )?;
+        expect_tok!(
+            more,
+            Token::OneByte(0x2B),
+            "Expected a comma.",
+            "For loops have at least 3 arguments."
+        )?;
+        let start = expect_some!(
+            Expression::parse(next_or_err!(more)?, more)?,
+            more,
+            "an expression"
+        )?;
+        expect_tok!(
+            more,
+            Token::OneByte(0x2B),
+            "Expected a comma.",
+            "For loops have at least 3 arguments."
+        )?;
+        let end = expect_some!(
+            Expression::parse(next_or_err!(more)?, more)?,
+            more,
+            "an expression"
+        )?;
 
         let mut step = None;
 
         if more.peek() == Some(Token::OneByte(0x2B)) {
             more.next();
-            step = Some(Expression::parse(more.next().unwrap(), more).unwrap());
+            step = Some(expect_some!(
+                Expression::parse(next_or_err!(more)?, more)?,
+                more,
+                "an expression"
+            )?);
         }
 
         if more.peek() == Some(Token::OneByte(0x11)) {
             more.next();
         }
 
-        Some(ForLoop {
+        Ok(Some(ForLoop {
             iterator,
             start,
             end,
             step,
-        })
+        }))
     }
 }

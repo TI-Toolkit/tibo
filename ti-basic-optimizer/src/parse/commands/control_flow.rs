@@ -2,6 +2,7 @@ mod for_loop;
 mod isds;
 mod menu;
 
+use crate::error_reporting::{expect_some, next_or_err, LineReport};
 use crate::parse::{
     commands::control_flow::{for_loop::ForLoop, isds::IsDs, menu::Menu},
     expression::Expression,
@@ -13,9 +14,9 @@ use titokens::{Token, Tokens};
 pub struct LabelName(u16);
 
 impl Parse for LabelName {
-    fn parse(token: Token, more: &mut Tokens) -> Option<Self> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
         if !token.is_alphanumeric() {
-            return None;
+            return Ok(None);
         }
 
         let mut data = (token.byte() as u16) << 8;
@@ -27,7 +28,7 @@ impl Parse for LabelName {
             }
         }
 
-        Some(LabelName(data))
+        Ok(Some(LabelName(data)))
     }
 }
 
@@ -49,32 +50,26 @@ pub enum ControlFlow {
 }
 
 impl Parse for ControlFlow {
-    fn parse(token: Token, more: &mut Tokens) -> Option<Self> {
+    #[rustfmt::skip]
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
         use ControlFlow as CF;
         use Expression as Expr;
+
         match token {
-            Token::OneByte(0xCE) => Some(CF::If(Expr::parse(more.next().unwrap(), more).unwrap())),
-            Token::OneByte(0xCF) => Some(CF::Then),
-            Token::OneByte(0xD1) => {
-                Some(CF::While(Expr::parse(more.next().unwrap(), more).unwrap()))
-            }
-            Token::OneByte(0xD2) => {
-                Some(CF::Repeat(Expr::parse(more.next().unwrap(), more).unwrap()))
-            }
-            Token::OneByte(0xD3) => Some(CF::For(ForLoop::parse(token, more).unwrap())),
-            Token::OneByte(0xD4) => Some(CF::End),
-            Token::OneByte(0xD5) => Some(CF::Return),
-            Token::OneByte(0xD6) => Some(CF::Lbl(
-                LabelName::parse(more.next().unwrap(), more).unwrap(),
-            )),
-            Token::OneByte(0xD7) => Some(CF::Goto(
-                LabelName::parse(more.next().unwrap(), more).unwrap(),
-            )),
-            Token::OneByte(0xD9) => Some(CF::Stop),
-            Token::OneByte(0xDA) => Some(CF::IsGt(IsDs::parse(token, more).unwrap())),
-            Token::OneByte(0xDB) => Some(CF::DsLt(IsDs::parse(token, more).unwrap())),
-            Token::OneByte(0xE6) => Some(CF::Menu(Menu::parse(token, more).unwrap())),
-            _ => None,
+            Token::OneByte(0xCE) => Ok(Some(CF::If(expect_some!(Expr::parse(next_or_err!(more)?, more)?, more, "a condition")?))),
+            Token::OneByte(0xCF) => Ok(Some(CF::Then)),
+            Token::OneByte(0xD1) => Ok(Some(CF::While(expect_some!(Expr::parse(next_or_err!(more)?, more)?, more, "a loop condition")?))),
+            Token::OneByte(0xD2) => Ok(Some(CF::Repeat(expect_some!(Expr::parse(next_or_err!(more)?, more)?, more, "a loop condition")?))),
+            Token::OneByte(0xD3) => Ok(Some(CF::For(expect_some!(ForLoop::parse(token, more)?, more, "a for statement")?))),
+            Token::OneByte(0xD4) => Ok(Some(CF::End)),
+            Token::OneByte(0xD5) => Ok(Some(CF::Return)),
+            Token::OneByte(0xD6) => Ok(Some(CF::Lbl(expect_some!(LabelName::parse(next_or_err!(more)?, more)?, more, "a label", "All Lbls must be followed by one or two numbers or letters.")?, ))),
+            Token::OneByte(0xD7) => Ok(Some(CF::Goto(expect_some!(LabelName::parse(next_or_err!(more)?, more)?, more, "a label", "All Gotos must be followed by one or two numbers or letters.")?,))),
+            Token::OneByte(0xD9) => Ok(Some(CF::Stop)),
+            Token::OneByte(0xDA) => Ok(Some(CF::IsGt(expect_some!(IsDs::parse(token, more)?, more, "Is<( statement")?))),
+            Token::OneByte(0xDB) => Ok(Some(CF::DsLt(expect_some!(IsDs::parse(token, more)?, more, "Ds>( statement")?))),
+            Token::OneByte(0xE6) => Ok(Some(CF::Menu(expect_some!(Menu::parse(token, more)?, more, "Menu(")?))),
+            _ => Ok(None),
         }
     }
 }

@@ -6,6 +6,7 @@ pub use control_flow::ControlFlow;
 pub use delvar_chain::DelVarChain;
 pub use generic::Generic;
 
+use crate::error_reporting::{expect_some, next_or_err, LineReport};
 use crate::parse::components::StoreTarget;
 use crate::parse::{expression::Expression, Parse};
 use titokens::{Token, Tokens};
@@ -20,22 +21,31 @@ pub enum Command {
 }
 
 impl Parse for Command {
-    fn parse(token: Token, more: &mut Tokens) -> Option<Self> {
-        (Generic::parse(token, more).map(Command::Generic))
-            .or_else(|| ControlFlow::parse(token, more).map(Command::ControlFlow))
-            .or_else(|| DelVarChain::parse(token, more).map(Command::DelVarChain))
-            .or_else(|| {
-                let expr = Expression::parse(token, more);
-                if expr.is_some() && more.peek() == Some(Token::OneByte(0x04)) {
-                    more.next();
+    #[allow(unused_parens)]
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+        if let Some(cmd) = Generic::parse(token, more)?.map(Command::Generic) {
+            Ok(Some(cmd))
+        } else if let Some(cmd) = ControlFlow::parse(token, more)?.map(Command::ControlFlow) {
+            Ok(Some(cmd))
+        } else if let Some(cmd) = DelVarChain::parse(token, more)?.map(Command::DelVarChain) {
+            Ok(Some(cmd))
+        } else if let Some(expr) = Expression::parse(token, more)? {
+            if more.peek() == Some(Token::OneByte(0x04)) {
+                more.next();
 
-                    Some(Command::Store(
-                        expr.unwrap(),
-                        StoreTarget::parse(more.next().unwrap(), more).unwrap(),
-                    ))
-                } else {
-                    expr.map(Command::Expression)
-                }
-            })
+                Ok(Some(Command::Store(
+                    expr,
+                    expect_some!(
+                        StoreTarget::parse(next_or_err!(more)?, more)?,
+                        more,
+                        "a store target"
+                    )?,
+                )))
+            } else {
+                Ok(Some(Command::Expression(expr)))
+            }
+        } else {
+            Ok(None)
+        }
     }
 }

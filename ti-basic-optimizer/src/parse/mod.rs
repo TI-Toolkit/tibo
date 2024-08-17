@@ -5,8 +5,10 @@ pub mod components;
 pub mod expression;
 mod program;
 
+use crate::error_reporting::LineReport;
+
 pub(crate) trait Parse: Sized {
-    fn parse(token: Token, more: &mut Tokens) -> Option<Self>;
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport>;
 }
 
 pub(crate) trait Reconstruct {

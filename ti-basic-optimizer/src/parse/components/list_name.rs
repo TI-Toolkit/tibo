@@ -1,6 +1,6 @@
-use titokens::{Token, Tokens};
-
+use crate::error_reporting::LineReport;
 use crate::parse::{Parse, Reconstruct};
+use titokens::{Token, Tokens};
 
 #[derive(Copy, Clone, Debug)]
 pub enum ListName {
@@ -11,22 +11,30 @@ pub enum ListName {
 }
 
 impl Parse for ListName {
-    fn parse(token: Token, tokens: &mut Tokens) -> Option<Self> {
+    fn parse(token: Token, tokens: &mut Tokens) -> Result<Option<Self>, LineReport> {
         match token {
             // 5Dxx, lists
-            Token::TwoByte(0x5D, 0x00..=0x05) => Some(ListName::Default(token)),
+            Token::TwoByte(0x5D, 0x00..=0x05) => Ok(Some(ListName::Default(token))),
 
             // EB, |L
             Token::OneByte(0xEB) => {
+                let start_position = tokens.current_position() - 1;
                 let mut name = [0_u8; 5];
                 let mut index = 0;
 
                 while let Some(token) = tokens.peek() {
+                    // 0-indexed
                     if index >= 5 {
-                        // syntax error:
-                        // custom list name must be no longer than 5 chars
-
-                        todo!()
+                        Err(LineReport::new(
+                            start_position,
+                            "List name has too many characters (max 5)",
+                            None,
+                        )
+                        .with_span_label(
+                            start_position..start_position + 7,
+                            "This part is a valid list name.",
+                        )
+                        .with_label(tokens.current_position(), "The part starting here is not."))?;
                     }
 
                     if index == 0 && token.is_alpha() || index > 0 && token.is_alphanumeric() {
@@ -38,15 +46,16 @@ impl Parse for ListName {
                 }
 
                 if index == 0 {
-                    // syntax error:
-                    // custom list name must start with an alpha character
-
-                    todo!()
+                    Err(LineReport::new(
+                        start_position,
+                        "Expected a list name.",
+                        Some("List names start with a letter A-θ."),
+                    ))?;
                 }
 
-                Some(ListName::Custom(name))
+                Ok(Some(ListName::Custom(name)))
             }
-            _ => None,
+            _ => Ok(None),
         }
     }
 }
@@ -57,7 +66,9 @@ impl Reconstruct for ListName {
             ListName::Default(tok) => vec![*tok],
             ListName::Custom(name) => name
                 .iter()
-                .filter_map(|&x| (x > 0).then(|| Token::OneByte(x)))
+                .filter(|&&x| (x > 0))
+                .cloned()
+                .map(Token::OneByte)
                 .collect(),
         }
     }

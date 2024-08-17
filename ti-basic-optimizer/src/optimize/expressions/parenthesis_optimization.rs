@@ -83,7 +83,10 @@ mod tests {
     #[test]
     fn parenthesis_optimization() {
         let mut tokens = load_test_data("/snippets/parsing/formulas/parenthesis-optimization.txt");
-        let mut expr = Expression::parse(tokens.next().unwrap(), &mut tokens).unwrap();
+        let mut expr = Expression::parse(tokens.next().unwrap(), &mut tokens)
+            .ok()
+            .flatten()
+            .unwrap();
 
         assert_eq!(expr.optimize_parentheses(), 2);
     }

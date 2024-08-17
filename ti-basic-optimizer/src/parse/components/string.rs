@@ -1,8 +1,8 @@
 use itertools::Itertools;
 
-use titokens::{Token, Tokens};
-
+use crate::error_reporting::LineReport;
 use crate::parse::{Parse, Reconstruct};
+use titokens::{Token, Tokens};
 
 #[derive(Clone, Debug)]
 pub struct TIString {
@@ -25,20 +25,20 @@ impl TIString {
 }
 
 impl Parse for TIString {
-    fn parse(token: Token, more: &mut Tokens) -> Option<Self> {
-        matches!(token, Token::OneByte(0x2A)).then(|| {
-            let data: Vec<Token> = more
-                .peeking_take_while(|tok| !matches!(tok, Token::OneByte(0x04 | 0x3F | 0x2A))) // ->, \n, "
-                .collect();
-            match more.peek() {
-                Some(Token::OneByte(0x2A)) => {
-                    more.next();
-                }
-                _ => {}
-            }
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+        if token != Token::OneByte(0x2A) {
+            return Ok(None);
+        }
 
-            TIString::new(data)
-        })
+        let data: Vec<Token> = more
+            .peeking_take_while(|tok| !matches!(tok, Token::OneByte(0x04 | 0x3F | 0x2A))) // ->, \n, "
+            .collect();
+
+        if let Some(Token::OneByte(0x2A)) = more.peek() {
+            more.next();
+        }
+
+        Ok(Some(TIString::new(data)))
     }
 }
 
@@ -61,7 +61,10 @@ mod tests {
 
         let mut tokens =
             test_files::load_test_data("/snippets/parsing/strings/quote-terminated.txt");
-        let result = TIString::parse(tokens.next().unwrap(), &mut tokens).unwrap();
+        let result = TIString::parse(tokens.next().unwrap(), &mut tokens)
+            .ok()
+            .flatten()
+            .unwrap();
         assert!(!result
             .data
             .iter()

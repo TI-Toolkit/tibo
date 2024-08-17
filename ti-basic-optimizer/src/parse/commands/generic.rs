@@ -1,3 +1,4 @@
+use crate::error_reporting::LineReport;
 use crate::parse::expression::Expression;
 use crate::parse::Parse;
 use titokens::{Token, Tokens};
@@ -9,16 +10,19 @@ pub struct Generic {
 }
 
 impl Parse for Generic {
-    fn parse(token: Token, more: &mut Tokens) -> Option<Self> {
-        Generic::recognize(token).then(|| {
-            let mut command = Generic {
-                kind: token,
-                arguments: vec![],
-            };
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+        if !Generic::recognize(token) {
+            return Ok(None);
+        }
 
-            if Generic::accepts_parameters(token) {
-                let mut next = more.next().unwrap();
-                while let Some(expr) = Expression::parse(next, more) {
+        let mut command = Generic {
+            kind: token,
+            arguments: vec![],
+        };
+
+        if Generic::accepts_parameters(token) {
+            if let Some(mut next) = more.next() {
+                while let Some(expr) = Expression::parse(next, more)? {
                     command.arguments.push(expr);
 
                     match more.peek() {
@@ -33,17 +37,20 @@ impl Parse for Generic {
                         }
                         Some(Token::OneByte(0x3E | 0x3F)) | None => break, // :, \n, EOF
 
-                        Some(x) => {
-                            panic!("Unexpected token {:?} in generic command invocation.", x)
-                        }
+                        Some(x) => Err(LineReport::new(
+                            more.current_position() - 1,
+                            "Unexpected character in command invocation",
+                            Some("perhaps it's unimplemented?"),
+                        )
+                        .with_label(more.current_position() - 1, "here"))?,
                     }
 
                     next = more.next().unwrap();
                 }
             }
+        }
 
-            command
-        })
+        Ok(Some(command))
     }
 }
 
@@ -167,6 +174,7 @@ impl Generic {
             | 0xBB68 // Archive
             | 0xBB69 // UnArchive
             | 0xBBCE // GarbageCollect
+            | 0xD8 // Pause
             | 0xDC // Input
             | 0xDD // Prompt
             | 0xDE // Disp
@@ -233,6 +241,7 @@ impl Generic {
             | 0xBB58..=0xBB59
             | 0xBB68..=0xBB69
             | 0xBBCE
+            | 0xD8
             | 0xDC..=0xDE
             | 0xE0
             | 0xE2..=0xE4

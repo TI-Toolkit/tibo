@@ -1,9 +1,9 @@
 use tifloats::{tifloat, Float};
 
-use titokens::{Token, Tokens};
-
+use crate::error_reporting::LineReport;
 use crate::parse::components::{string::TIString, Operand};
 use crate::parse::Parse;
+use titokens::{Token, Tokens};
 
 pub struct Builder<'a> {
     tokens: &'a mut Tokens,
@@ -173,15 +173,15 @@ impl<'a> Builder<'a> {
 }
 
 impl Parse for tifloats::Float {
-    fn parse(token: Token, more: &mut Tokens) -> Option<Self> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
         match token {
             Token::OneByte(0x30..=0x3B) => {
                 more.backtrack_once();
                 let mut builder = Builder::new(more);
-                Some(builder.parse())
+                Ok(Some(builder.parse()))
             }
 
-            _ => None,
+            _ => Ok(None),
         }
     }
 }
