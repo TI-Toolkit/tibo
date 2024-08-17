@@ -39,7 +39,10 @@ impl Parse for Command {
                         StoreTarget::parse(next_or_err!(more)?, more)?,
                         more,
                         "a store target"
-                    )?,
+                    )
+                    .map_err(|x| {
+                        x.with_label(more.current_position() - 2, "Store arrow is here.")
+                    })?,
                 )))
             } else {
                 Ok(Some(Command::Expression(expr)))
