@@ -37,7 +37,7 @@ impl Parse for Generic {
                         }
                         Some(Token::OneByte(0x3E | 0x3F)) | None => break, // :, \n, EOF
 
-                        Some(x) => Err(LineReport::new(
+                        Some(_) => Err(LineReport::new(
                             more.current_position() - 1,
                             "Unexpected character in command invocation",
                             Some("perhaps it's unimplemented?"),

@@ -231,14 +231,14 @@ impl<'a> Builder<'a> {
 
         assert!(self.valid());
 
-        Ok(self.operand_stack.get(0).cloned())
+        Ok(self.operand_stack.first().cloned())
     }
 }
 
 impl Parse for Expression {
     fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
         more.backtrack_once();
-        let mut builder = Builder::new(more);
+        let builder = Builder::new(more);
 
         builder.build()
     }

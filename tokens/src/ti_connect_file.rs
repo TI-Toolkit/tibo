@@ -48,7 +48,7 @@ impl TIProgram {
     }
 
     fn checksum(&self) -> u16 {
-        (self.token_data_length as u16).wrapping_add(
+        self.token_data_length.wrapping_add(
             self.data
                 .iter()
                 .fold(0u16, |a, &x| a.wrapping_add(x as u16)),

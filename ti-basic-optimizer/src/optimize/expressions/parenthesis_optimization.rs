@@ -69,7 +69,7 @@ impl Expression {
                 }
             }
 
-            Expression::Operand(_) | _ => 0,
+            _=> 0,
         }
     }
 }

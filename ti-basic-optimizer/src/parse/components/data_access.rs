@@ -58,9 +58,9 @@ impl TryFrom<Operand> for MatrixIndexable {
 
 #[derive(Debug, Clone)]
 pub struct MatrixAccess {
-    subject: MatrixIndexable,
-    row: Box<Expression>,
-    col: Box<Expression>,
+    pub subject: MatrixIndexable,
+    pub row: Box<Expression>,
+    pub col: Box<Expression>,
 }
 
 impl MatrixAccess {
@@ -105,8 +105,8 @@ impl MatrixAccess {
 
 #[derive(Debug, Clone)]
 pub struct ListAccess {
-    subject: ListIndexable,
-    index: Box<Expression>,
+    pub subject: ListIndexable,
+    pub index: Box<Expression>,
 }
 
 impl ListAccess {
