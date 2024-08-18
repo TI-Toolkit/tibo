@@ -1,5 +1,5 @@
 LabelOff:AxesOff:GridOff:BackgroundOff
-ZStandard:ZSquare:TextColor(Black
+ZStandard:ZSquare:TextColor(BLACK
 SetUpEditor |LSTICK
 2->dim(|LSTICK
 Fill(0,|LSTICK
@@ -9,18 +9,18 @@ X+3->W
 Repeat |LSTICK(2)>3
 ClrDraw
 For(A,2,4,2
-Line(X,~5,W,~5,1,Black,A
+Line(X,~5,W,~5,1,BLACK,A
 End
-Line(W,~5,W,~10,1,Black
+Line(W,~5,W,~10,1,BLACK
 W+randInt(2,8->I
 randInt(1,5)/2->J
-Line(I,~5,I+J,~5,1,Black,4
-Line(I,~10,I,~5,1,Black
-Line(I+J,~10,I+J,~5,1,Black
+Line(I,~5,I+J,~5,1,BLACK,4
+Line(I,~10,I,~5,1,BLACK
+Line(I+J,~10,I+J,~5,1,BLACK
 (W+X)/2
-Pt-On(Ans,~4.5,2,Black
+Pt-On(Ans,~4.5,2,BLACK
 Pt-Off(Ans,~4.5,3
-Pt-On(W,~5,3,Black
+Pt-On(W,~5,3,BLACK
 Text(1,55,"STICK HERO CE!
 "
 If 100>|LSTICK(1
@@ -29,7 +29,7 @@ If 10>|LSTICK(1
 "00
 Text(35,237,Ans,|LSTICK(1
 For(A,1,3-|LSTICK(2
-Pt-On(Xmax-1.5A,Ymax-1,2,Black
+Pt-On(Xmax-1.5A,Ymax-1,2,BLACK
 Pt-Off(Xmax-1.5A,Ymax-1,3
 End
 Lbl R
@@ -38,7 +38,7 @@ getKey
 DelVar T
 Repeat Ans or T>15
 T+0.1->T
-Line(W,~5,W,~5+T,1,Brown,1
+Line(W,~5,W,~5+T,1,BROWN,1
 getKey
 End
 Ans->K
@@ -48,15 +48,15 @@ W->A:~5->B
 ~pi/64->theta
 Repeat theta>=pi/2
 Line(W,~5,A,B,0
-Pt-On(W,~5,3,Black
+Pt-On(W,~5,3,BLACK
 theta+pi/64->theta
 W+Tsin(theta->A
 ~5+Tcos(theta->B
-Line(W,~5,A,B,1,Brown,1
+Line(W,~5,A,B,1,BROWN,1
 End
 For(A,~1.5,T,0.5
 W+A
-Pt-On(Ans,~4.5,2,Black
+Pt-On(Ans,~4.5,2,BLACK
 Pt-Off(Ans,~4.5,3
 Wait 0.05
 Pt-Off(Ans,~4.5,2
@@ -67,7 +67,7 @@ Then
 1+|LSTICK(1->|LSTICK(1
 (2I+J)/2
 For(A,M,Ans,(1-2(Ans<M))/2
-Pt-On(A,~4.5,2,Black
+Pt-On(A,~4.5,2,BLACK
 Pt-Off(A,~4.5,3
 Wait 0.05
 Pt-Off(A,~4.5,2
@@ -87,11 +87,11 @@ Else
 For(A,~5,~10,~.5
 If (W+T+.5)>=I and (W+T-.5)<=(I+J)
 Then
-Line(I,~5,I+J,~5,1,Black,4
-Line(I,~10,I,~5,1,Black
-Line(I+J,~10,I+J,~5,1,Black
+Line(I,~5,I+J,~5,1,BLACK,4
+Line(I,~10,I,~5,1,BLACK
+Line(I+J,~10,I+J,~5,1,BLACK
 End
-Pt-On(W+T,A,2,Black
+Pt-On(W+T,A,2,BLACK
 Pt-Off(W+T,A,3
 Wait 0.05
 Pt-Off(W+T,A,2
@@ -105,14 +105,14 @@ SetUpEditor |LSH
 Ans->|LSH(11
 SortD(|LSH
 10->dim(|LSH
-TextColor(Black
+TextColor(BLACK
 Text(1,1,"HIGHSCORES:
 1->C
 For(A,1,10
-TextColor(Black
+TextColor(BLACK
 If C and |LSH(A)=N
 Then
-TextColor(Red
+TextColor(RED
 DelVar C
 End
 A=10

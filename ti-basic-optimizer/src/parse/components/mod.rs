@@ -1,6 +1,7 @@
-use crate::error_reporting::LineReport;
+use crate::error_reporting::{next_or_err, LineReport};
 pub use crate::parse::components::{
     binary_operator::BinOp,
+    data_access::{ListAccess, ListIndexable, MatrixAccess, MatrixIndexable},
     equation_name::EquationName,
     function_call::FunctionCall,
     list::TIList,
@@ -18,6 +19,7 @@ use crate::parse::Parse;
 use titokens::{Token, Tokens};
 
 mod binary_operator;
+mod data_access;
 mod equation_name;
 mod function_call;
 mod list;
@@ -35,9 +37,6 @@ mod window_var_name;
 pub enum Operator {
     Binary(BinOp),
     Unary(UnOp),
-    /// The only ternary operator in TI-BASIC.
-    MatrixAccess, // TODO
-    ListAccess, // TODO
 
     FunctionCall(FunctionCall),
 
@@ -107,6 +106,8 @@ pub enum DelVarTarget {
     NumericVar(NumericVarName),
     List(ListName),
     Matrix(MatrixName),
+    ListAccess(ListAccess),
+    MatrixAccess(MatrixAccess),
     String(StringName),
     Pic(PicName),
     Image(ImageName),
@@ -121,9 +122,31 @@ impl Parse for DelVarTarget {
                 Ok(NumericVarName::parse(token, more)?.map(Self::NumericVar))
             }
             Token::TwoByte(0xAA, _) => Ok(StringName::parse(token, more)?.map(Self::String)),
-            Token::TwoByte(0x5C, _) => Ok(MatrixName::parse(token, more)?.map(Self::Matrix)),
+            Token::TwoByte(0x5C, _) => {
+                if let Some(name) = MatrixName::parse(token, more)? {
+                    if more.peek() == Some(Token::OneByte(0x10)) {
+                        Ok(
+                            MatrixAccess::parse(name.into(), more.next().unwrap(), more)?
+                                .map(Self::MatrixAccess),
+                        )
+                    } else {
+                        Ok(Some(Self::Matrix(name)))
+                    }
+                } else {
+                    Ok(None)
+                }
+            }
             Token::TwoByte(0x5D, _) | Token::OneByte(0xEB) => {
-                Ok(ListName::parse(token, more)?.map(Self::List))
+                if let Some(name) = ListName::parse(token, more)? {
+                    if more.peek() == Some(Token::OneByte(0x10)) {
+                        Ok(ListAccess::parse(name.into(), more.next().unwrap(), more)?
+                            .map(Self::ListAccess))
+                    } else {
+                        Ok(Some(Self::List(name)))
+                    }
+                } else {
+                    Ok(None)
+                }
             }
             Token::TwoByte(0x60, _) => Ok(PicName::parse(token, more)?.map(Self::Pic)),
             Token::TwoByte(0xEF, _) => Ok(ImageName::parse(token, more)?.map(Self::Image)),
@@ -138,10 +161,15 @@ pub enum StoreTarget {
     NumericVar(NumericVarName),
     List(ListName),
     Matrix(MatrixName),
+    ListAccess(ListAccess),
+    MatrixAccess(MatrixAccess),
+    ListResizing(ListName),
+    MatrixResizing(MatrixName),
     String(StringName),
     // ListAccess, ArrayAccess
     Equation(EquationName),
     WindowVar(WindowVarName),
+    RandSeed,
 }
 
 impl Parse for StoreTarget {
@@ -151,14 +179,52 @@ impl Parse for StoreTarget {
                 Ok(NumericVarName::parse(token, more)?.map(Self::NumericVar))
             }
             Token::TwoByte(0xAA, _) => Ok(StringName::parse(token, more)?.map(Self::String)),
-            Token::TwoByte(0x5C, _) => Ok(MatrixName::parse(token, more)?.map(Self::Matrix)),
+            Token::TwoByte(0x5C, _) => {
+                if let Some(name) = MatrixName::parse(token, more)? {
+                    if more.peek() == Some(Token::OneByte(0x10)) {
+                        Ok(
+                            MatrixAccess::parse(name.into(), more.next().unwrap(), more)?
+                                .map(Self::MatrixAccess),
+                        )
+                    } else {
+                        Ok(Some(Self::Matrix(name)))
+                    }
+                } else {
+                    Ok(None)
+                }
+            }
             Token::TwoByte(0x5D, _) | Token::OneByte(0xEB) => {
-                Ok(ListName::parse(token, more)?.map(Self::List))
+                if let Some(name) = ListName::parse(token, more)? {
+                    if more.peek() == Some(Token::OneByte(0x10)) {
+                        Ok(ListAccess::parse(name.into(), more.next().unwrap(), more)?
+                            .map(Self::ListAccess))
+                    } else {
+                        Ok(Some(Self::List(name)))
+                    }
+                } else {
+                    Ok(None)
+                }
+            }
+            Token::OneByte(0xB5) => {
+                let next = next_or_err!(more)?;
+
+                if let Some(list) = ListName::parse(next, more)? {
+                    Ok(Some(Self::ListResizing(list)))
+                } else if let Some(matrix) = MatrixName::parse(next, more)? {
+                    Ok(Some(Self::MatrixResizing(matrix)))
+                } else {
+                    Err(LineReport::new(
+                        more.current_position(),
+                        "Expected a list or matrix name.",
+                        Some("Storing to a dim( of a list or matrix resizes that list or matrix."),
+                    ))
+                }
             }
             Token::TwoByte(0x5E, _) => Ok(EquationName::parse(token, more)?.map(Self::Equation)),
             Token::TwoByte(0x63, 0x00..=0x2A | 0x32..=0x38) => {
                 Ok(WindowVarName::parse(token, more)?.map(Self::WindowVar))
             }
+            Token::OneByte(0xAB) => Ok(Some(Self::RandSeed)),
             _ => Ok(None),
         }
     }

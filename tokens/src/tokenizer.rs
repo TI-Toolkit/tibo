@@ -107,7 +107,7 @@ impl Tokenizer {
         let mut trie = Trie::new();
 
         crate::xmlparse::DATA.iter().for_each(|(key, value)| {
-            if cfg!(unicode) {
+            if cfg!(feature = "unicode") {
                 names.insert(*key, value.at(&version, lang_code).display.clone());
             } else {
                 names.insert(*key, value.at(&version, lang_code).accessible.clone());

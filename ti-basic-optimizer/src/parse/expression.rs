@@ -94,7 +94,7 @@ impl<'a> Builder<'a> {
             if let Some(Token::OneByte(0x10)) = self.tokens.peek() {
                 // (
                 match &operand {
-                    Operand::ListName(_) | Operand::Ans | Operand::MatrixName(_) => {
+                    Operand::Ans => {
                         unimplemented!()
                     }
                     _ => {}
