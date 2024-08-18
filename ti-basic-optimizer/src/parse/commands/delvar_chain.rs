@@ -31,9 +31,8 @@ impl Parse for DelVarChain {
             }
         }
 
-        if let Some(tok) = more.peek() {
-            more.next();
-            chain.valence = Command::parse(tok, more)?.map(Box::new);
+        if !matches!(more.peek(), None | Some(Token::OneByte(0x3E | 0x3F))) {
+            chain.valence = Command::parse(next_or_err!(more)?, more)?.map(Box::new);
         }
 
         Ok(Some(chain))
