@@ -9,21 +9,8 @@ use titokens::{Token, Tokens};
 #[derive(Debug, Clone)]
 pub enum ListIndexable {
     List(ListName),
-    GetDate,
+    TblInput,
     Ans,
-}
-
-impl TryFrom<Operand> for ListIndexable {
-    type Error = ();
-
-    fn try_from(value: Operand) -> Result<Self, Self::Error> {
-        match value {
-            Operand::ListName(x) => Ok(Self::List(x)),
-            Operand::Ans => Ok(Self::Ans),
-            Operand::GetDate => Ok(Self::GetDate),
-            _ => Err(()),
-        }
-    }
 }
 
 impl From<ListName> for ListIndexable {

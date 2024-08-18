@@ -20,6 +20,8 @@ impl Parse for Generic {
             arguments: vec![],
         };
 
+        let command_position = more.current_position() - 1;
+
         if Generic::accepts_parameters(token) {
             if let Some(mut next) = more.next() {
                 while let Some(expr) = Expression::parse(next, more)? {
@@ -42,6 +44,7 @@ impl Parse for Generic {
                             "Unexpected character in command invocation",
                             Some("perhaps it's unimplemented?"),
                         )
+                        .with_label(command_position, "This command.")
                         .with_label(more.current_position() - 1, "here"))?,
                     }
 
