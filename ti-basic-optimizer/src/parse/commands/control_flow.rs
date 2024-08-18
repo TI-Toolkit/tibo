@@ -36,6 +36,7 @@ impl Parse for LabelName {
 pub enum ControlFlow {
     If(Expression),
     Then,
+    Else,
     While(Expression),
     Repeat(Expression),
     For(ForLoop),
@@ -58,6 +59,7 @@ impl Parse for ControlFlow {
         match token {
             Token::OneByte(0xCE) => Ok(Some(CF::If(expect_some!(Expr::parse(next_or_err!(more)?, more)?, more, "a condition")?))),
             Token::OneByte(0xCF) => Ok(Some(CF::Then)),
+            Token::OneByte(0xD0) => Ok(Some(CF::Else)),
             Token::OneByte(0xD1) => Ok(Some(CF::While(expect_some!(Expr::parse(next_or_err!(more)?, more)?, more, "a loop condition")?))),
             Token::OneByte(0xD2) => Ok(Some(CF::Repeat(expect_some!(Expr::parse(next_or_err!(more)?, more)?, more, "a loop condition")?))),
             Token::OneByte(0xD3) => Ok(Some(CF::For(expect_some!(ForLoop::parse(token, more)?, more, "a for statement")?))),
