@@ -57,6 +57,8 @@ pub enum Operand {
     NumericVarName(NumericVarName),
     ListName(ListName),
     MatrixName(MatrixName),
+    ListAccess(ListAccess),
+    MatrixAccess(MatrixAccess),
     StringName(StringName),
     Ans,
     GetKey,
@@ -88,9 +90,31 @@ impl Parse for Operand {
             Token::OneByte(0x08) => Ok(TIList::parse(token, more)?.map(Self::ListLiteral)),
 
             Token::TwoByte(0xAA, _) => Ok(StringName::parse(token, more)?.map(Self::StringName)),
-            Token::TwoByte(0x5C, _) => Ok(MatrixName::parse(token, more)?.map(Self::MatrixName)),
+            Token::TwoByte(0x5C, _) => {
+                if let Some(name) = MatrixName::parse(token, more)? {
+                    if more.peek() == Some(Token::OneByte(0x10)) {
+                        Ok(
+                            MatrixAccess::parse(name.into(), more.next().unwrap(), more)?
+                                .map(Self::MatrixAccess),
+                        )
+                    } else {
+                        Ok(Some(Self::MatrixName(name)))
+                    }
+                } else {
+                    Ok(None)
+                }
+            }
             Token::TwoByte(0x5D, _) | Token::OneByte(0xEB) => {
-                Ok(ListName::parse(token, more)?.map(Self::ListName))
+                if let Some(name) = ListName::parse(token, more)? {
+                    if more.peek() == Some(Token::OneByte(0x10)) {
+                        Ok(ListAccess::parse(name.into(), more.next().unwrap(), more)?
+                            .map(Self::ListAccess))
+                    } else {
+                        Ok(Some(Self::ListName(name)))
+                    }
+                } else {
+                    Ok(None)
+                }
             }
             Token::TwoByte(0x63, 0x2A) => Ok(Some(Self::TblInput)),
             Token::TwoByte(0x63, 0x00..=0x2A | 0x32..=0x38) => {
