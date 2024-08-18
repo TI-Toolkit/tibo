@@ -23,23 +23,28 @@ impl Parse for ListName {
                 let mut index = 0;
 
                 while let Some(token) = tokens.peek() {
-                    // 0-indexed
-                    if index >= 5 {
-                        Err(LineReport::new(
-                            start_position,
-                            "List name has too many characters (max 5)",
-                            None,
-                        )
-                        .with_span_label(
-                            start_position..start_position + 7,
-                            "This part is a valid list name.",
-                        )
-                        .with_label(tokens.current_position(), "The part starting here is not."))?;
-                    }
-
                     if index == 0 && token.is_alpha() || index > 0 && token.is_alphanumeric() {
+                        // 0-indexed
+                        if index >= 5 {
+                            return Err(LineReport::new(
+                                start_position,
+                                "List name has too many characters (max 5)",
+                                None,
+                            )
+                            .with_span_label(
+                                start_position..start_position + 7,
+                                "This part is a valid list name.",
+                            )
+                            .with_label(
+                                tokens.current_position(),
+                                "The part starting here is not.",
+                            ))?;
+                        }
+
                         name[index] = token.byte();
                         index += 1;
+
+                        tokens.next();
                     } else {
                         break;
                     }
