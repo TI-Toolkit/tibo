@@ -75,6 +75,7 @@ pub(crate) struct Translation {
     #[serde(rename = "@ti-ascii")]
     pub(crate) ti_ascii: String,
 
+    #[serde(rename = "@display")]
     pub(crate) display: String,
 
     pub(crate) accessible: String,
