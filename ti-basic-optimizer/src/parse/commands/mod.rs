@@ -31,19 +31,21 @@ impl Parse for Command {
             Ok(Some(cmd))
         } else if let Some(expr) = Expression::parse(token, more)? {
             if more.peek() == Some(Token::OneByte(0x04)) {
+                let arrow_pos = more.current_position();
                 more.next();
 
                 Ok(Some(Command::Store(
                     expr,
+
                     expect_some!(
                         StoreTarget::parse(next_or_err!(more)?, more)?,
                         more,
                         1,
                         "a store target",
-                        "This cannot be stored to with a store arrow."
+                        "Parsing failed here."
                     )
                     .map_err(|x| {
-                        x.with_label(more.current_position() - 2, "Store arrow is here.")
+                        x.with_label(arrow_pos, "Store arrow is here.")
                     })?,
                 )))
             } else {
