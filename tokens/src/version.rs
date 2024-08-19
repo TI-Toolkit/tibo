@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
+use lazy_static::lazy_static;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Model {
@@ -111,13 +112,21 @@ pub struct Version {
     pub os_version: String,
 }
 
-impl Version {
-    pub fn latest() -> Self {
-        Version {
-            model: Model::LATEST,
-            os_version: "9.99.99".to_string(),
-        }
-    }
+lazy_static! {
+    pub static ref LATEST: Version = Version {
+        model: Model::LATEST,
+        os_version: "9.99.99".to_string(),
+    };
+
+    pub static ref LATEST_MONO: Version = Version {
+        model: Model::TI84P,
+        os_version: "9.99.99".to_string(),
+    };
+
+    pub static ref EARLIEST_COLOR: Version = Version {
+        model: Model::TI84PCSE,
+        os_version: "0.0.0".to_string(),
+    };
 }
 
 fn cmp_os_version(a: &str, b: &str) -> Ordering {

@@ -4,7 +4,7 @@ pub use tokenizer::Tokenizer;
 pub use version::{Model, Version};
 
 pub mod tokenizer;
-mod version;
+pub mod version;
 
 mod xmlparse;
 
