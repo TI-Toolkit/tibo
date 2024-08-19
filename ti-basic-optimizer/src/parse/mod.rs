@@ -1,4 +1,4 @@
-use titokens::{Token, Tokens};
+use titokens::{Token, Tokens, Version};
 
 pub mod commands;
 pub mod components;
@@ -13,5 +13,5 @@ pub(crate) trait Parse: Sized {
 }
 
 pub(crate) trait Reconstruct {
-    fn reconstruct(&self) -> Vec<Token>;
+    fn reconstruct(&self, version: titokens::Version) -> Vec<Token>;
 }

@@ -1,10 +1,6 @@
 use crate::error_reporting::{expect_some, expect_tok, next_or_err, LineReport};
-use crate::parse::{
-    components::{ListName, MatrixName, Operand},
-    expression::Expression,
-    Parse,
-};
-use titokens::{Token, Tokens};
+use crate::parse::{components::{ListName, MatrixName, Operand}, expression::Expression, Parse, Reconstruct};
+use titokens::{Token, Tokens, Version};
 
 #[derive(Debug, Clone)]
 pub enum ListIndexable {
@@ -16,6 +12,16 @@ pub enum ListIndexable {
 impl From<ListName> for ListIndexable {
     fn from(value: ListName) -> Self {
         Self::List(value)
+    }
+}
+
+impl Reconstruct for ListIndexable {
+    fn reconstruct(&self, version: Version) -> Vec<Token> {
+        match self {
+            Self::List(name) => name.reconstruct(version),
+            Self::TblInput => vec![Token::TwoByte(0x63, 0x2A)],
+            Self::Ans => vec![Token::OneByte(0x72)],
+        }
     }
 }
 
@@ -31,14 +37,11 @@ impl From<MatrixName> for MatrixIndexable {
     }
 }
 
-impl TryFrom<Operand> for MatrixIndexable {
-    type Error = ();
-
-    fn try_from(value: Operand) -> Result<Self, Self::Error> {
-        match value {
-            Operand::MatrixName(x) => Ok(Self::Matrix(x)),
-            Operand::Ans => Ok(MatrixIndexable::Ans),
-            _ => Err(()),
+impl Reconstruct for MatrixIndexable {
+    fn reconstruct(&self, version: Version) -> Vec<Token> {
+        match self {
+            Self::Matrix(name) => name.reconstruct(version),
+            Self::Ans => vec![Token::OneByte(0x72)],
         }
     }
 }

@@ -2,7 +2,7 @@ use itertools::Itertools;
 
 use crate::error_reporting::LineReport;
 use crate::parse::{Parse, Reconstruct};
-use titokens::{Token, Tokens};
+use titokens::{Token, Tokens, Version};
 
 #[derive(Clone, Debug)]
 pub struct TIString {
@@ -43,7 +43,7 @@ impl Parse for TIString {
 }
 
 impl Reconstruct for TIString {
-    fn reconstruct(&self) -> Vec<Token> {
+    fn reconstruct(&self, version: Version) -> Vec<Token> {
         let mut tokens = vec![Token::OneByte(0x2A)];
         tokens.extend_from_slice(&self.data);
         tokens.push(Token::OneByte(0x2A));

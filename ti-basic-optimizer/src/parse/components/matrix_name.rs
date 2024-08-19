@@ -1,6 +1,6 @@
 use crate::error_reporting::LineReport;
 use crate::parse::{Parse, Reconstruct};
-use titokens::{Token, Tokens};
+use titokens::{Token, Tokens, Version};
 
 #[derive(Copy, Clone, Debug)]
 pub struct MatrixName(Token);
@@ -15,7 +15,7 @@ impl Parse for MatrixName {
 }
 
 impl Reconstruct for MatrixName {
-    fn reconstruct(&self) -> Vec<Token> {
+    fn reconstruct(&self, version: Version) -> Vec<Token> {
         vec![self.0]
     }
 }

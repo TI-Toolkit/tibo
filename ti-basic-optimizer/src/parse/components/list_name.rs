@@ -1,6 +1,6 @@
 use crate::error_reporting::LineReport;
 use crate::parse::{Parse, Reconstruct};
-use titokens::{Token, Tokens};
+use titokens::{Token, Tokens, Version};
 
 #[derive(Copy, Clone, Debug)]
 pub enum ListName {
@@ -65,7 +65,7 @@ impl Parse for ListName {
 }
 
 impl Reconstruct for ListName {
-    fn reconstruct(&self) -> Vec<Token> {
+    fn reconstruct(&self, version: Version) -> Vec<Token> {
         match self {
             ListName::Default(tok) => vec![*tok],
             ListName::Custom(name) => std::iter::once(Token::OneByte(0xEB))
@@ -82,6 +82,7 @@ impl Reconstruct for ListName {
 
 #[cfg(test)]
 mod tests {
+    use test_files::test_version;
     use super::*;
 
     #[test]
@@ -99,6 +100,6 @@ mod tests {
         let parsed = ListName::parse(tokens.next().unwrap(), &mut tokens)
             .unwrap()
             .unwrap();
-        assert_eq!(parsed.reconstruct(), name);
+        assert_eq!(parsed.reconstruct(test_version()), name);
     }
 }
