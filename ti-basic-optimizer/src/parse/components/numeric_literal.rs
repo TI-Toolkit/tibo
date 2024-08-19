@@ -2,8 +2,8 @@ use tifloats::{tifloat, Float};
 
 use crate::error_reporting::LineReport;
 use crate::parse::components::{string::TIString, Operand};
-use crate::parse::Parse;
-use titokens::{Token, Tokens};
+use crate::parse::{Parse, Reconstruct};
+use titokens::{Token, Tokens, Version};
 
 pub struct Builder<'a> {
     tokens: &'a mut Tokens,
@@ -234,58 +234,161 @@ pub(crate) fn parse_constant(tok: Token, more: &mut Tokens) -> Option<Operand> {
     }
 }
 
+impl Reconstruct for tifloats::Float {
+    fn reconstruct(&self, version: Version) -> Vec<Token> {
+        let sig_figs = self.significant_figures();
+
+        // If they're available, using constants is faster than using the numbers themselves because
+        // retrieving an already-parsed number from memory is faster than parsing it again.
+        //
+        // for long decimals like pi and e, this also saves size
+        if version > *titokens::version::EARLIEST_COLOR {
+            if (tifloat!(0x0010000000000000 * 10 ^ 1)..=tifloat!(0x0024000000000000 * 10 ^ 1))
+                .contains(self)
+            {
+                let lower_byte = (0x41 - 10)
+                    + if sig_figs.len() == 2 {
+                        sig_figs[0] * 10 + sig_figs[1]
+                    } else {
+                        sig_figs[0] * 10
+                    };
+                debug_assert!((0x41..=0x4F).contains(&lower_byte));
+
+                return vec![Token::TwoByte(0xEF, lower_byte)];
+            }
+
+            if tifloat!(0x0031415926535898 * 10 ^ 0) == *self {
+                return vec![Token::OneByte(0xAC)];
+            } else if tifloat!(0x0027182818284590 * 10 ^ 0) == *self {
+                return vec![Token::TwoByte(0xBB, 0x31)];
+            }
+        }
+
+        let mut result = Vec::with_capacity(2 + self.exponent().abs() as usize);
+
+        if self.is_negative() {
+            result.push(Token::OneByte(0xB0))
+        }
+
+        let exponent = self.exponent();
+        if exponent < 0 {
+            result.push(Token::OneByte(0x3A));
+            // need |exponent|-1 zeros
+            for i in 0..exponent.abs() - 1 {
+                result.push(Token::OneByte(0x30));
+            }
+        }
+
+        result.extend(
+            sig_figs
+                .iter()
+                .map(|x| Token::OneByte(0x30 + x))
+                .collect::<Vec<_>>(),
+        );
+
+        if exponent > 0 {
+            if sig_figs.len() > exponent as usize {
+                result.insert(
+                    result.len() + exponent as usize - sig_figs.len(),
+                    Token::OneByte(0x3A),
+                );
+            } else if exponent as usize >= sig_figs.len() {
+                // need exponent+1-sigfigs zeros
+                // eg. 10=1.0 * 10^1 (has sigfigs=1, exponent=1, zeros=1)
+                for i in 0..(exponent as usize + 1 - sig_figs.len()) {
+                    result.push(Token::OneByte(0x30));
+                }
+            }
+        }
+
+        result
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use tifloats::tifloat;
-
     use super::*;
 
-    macro_rules! test_case {
-        ($name:ident, $path:expr, $expected:expr) => {
-            #[test]
-            fn $name() {
-                use test_files::load_test_data;
-                let mut tokens = load_test_data($path);
-                let mut builder = Builder::new(&mut tokens);
+    mod parse {
+        use super::*;
+        macro_rules! parse_test_case {
+            ($name:ident, $path:expr, $expected:expr) => {
+                #[test]
+                fn $name() {
+                    use test_files::load_test_data;
+                    let mut tokens = load_test_data($path);
+                    let mut builder = Builder::new(&mut tokens);
 
-                assert_eq!(builder.parse(), $expected)
-            }
-        };
+                    assert_eq!(builder.parse(), $expected)
+                }
+            };
+        }
+
+        parse_test_case!(
+            one,
+            "/snippets/parsing/numbers/one.txt",
+            tifloat!(0x10000000000000 * 10 ^ 0)
+        );
+
+        parse_test_case!(
+            digits,
+            "/snippets/parsing/numbers/digits.txt",
+            tifloat!(0x12345678900000 * 10 ^ 9)
+        );
+
+        parse_test_case!(
+            exponents,
+            "/snippets/parsing/numbers/9e99.txt",
+            tifloat!(0x90000000000000 * 10 ^ 99)
+        );
+
+        parse_test_case!(
+            leading_zeros,
+            "/snippets/parsing/numbers/leading-zeros.txt",
+            tifloat!(0x50000500000000 * 10 ^ 0)
+        );
+
+        parse_test_case!(
+            leading_decimal,
+            "/snippets/parsing/numbers/leading-decimal.txt",
+            tifloat!(0x50000000000000 * 10 ^ -5)
+        );
+
+        parse_test_case!(
+            zero,
+            "/snippets/parsing/numbers/zero.txt",
+            tifloat!(0x00000000000000 * 10 ^ 0)
+        );
     }
 
-    test_case!(
-        one,
-        "/snippets/parsing/numbers/one.txt",
-        tifloat!(0x10000000000000 * 10 ^ 0)
-    );
+    mod reconstruct {
+        use super::*;
+        macro_rules! reconstruct_test_case {
+            ($name:ident, $path:expr) => {
+                #[test]
+                fn $name() {
+                    use test_files::{load_test_data, test_version};
+                    let data = load_test_data($path);
+                    let mut tokens = data.clone();
+                    let mut builder = Builder::new(&mut tokens);
 
-    test_case!(
-        digits,
-        "/snippets/parsing/numbers/digits.txt",
-        tifloat!(0x12345678900000 * 10 ^ 9)
-    );
+                    assert_eq!(
+                        builder
+                            .parse()
+                            .reconstruct(titokens::version::LATEST_MONO.clone()),
+                        data.collect::<Vec<_>>()
+                    );
+                }
+            };
+        }
 
-    test_case!(
-        exponents,
-        "/snippets/parsing/numbers/9e99.txt",
-        tifloat!(0x90000000000000 * 10 ^ 99)
-    );
-
-    test_case!(
-        leading_zeros,
-        "/snippets/parsing/numbers/leading-zeros.txt",
-        tifloat!(0x50000500000000 * 10 ^ 0)
-    );
-
-    test_case!(
-        leading_decimal,
-        "/snippets/parsing/numbers/leading-decimal.txt",
-        tifloat!(0x50000000000000 * 10 ^ -5)
-    );
-
-    test_case!(
-        zero,
-        "/snippets/parsing/numbers/zero.txt",
-        tifloat!(0x00000000000000 * 10 ^ 0)
-    );
+        reconstruct_test_case!(zero, "/snippets/parsing/numbers/zero.txt");
+        reconstruct_test_case!(one, "/snippets/parsing/numbers/one.txt");
+        reconstruct_test_case!(ten, "/snippets/parsing/numbers/ten.txt"); // also checks not(10->RED)
+        reconstruct_test_case!(
+            leading_decimal,
+            "/snippets/parsing/numbers/leading-decimal.txt"
+        );
+        reconstruct_test_case!(digits, "/snippets/parsing/numbers/digits.txt");
+    }
 }
