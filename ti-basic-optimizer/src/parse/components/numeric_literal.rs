@@ -287,7 +287,9 @@ impl Reconstruct for tifloats::Float {
         );
 
         if exponent > 0 {
-            if sig_figs.len() > exponent as usize {
+            // eg. 12 has sigfigs=2, exponent=1, does not need decimal point
+            // eg. 12.3 has sigfigs=3, exponent=1, needs decimal point
+            if sig_figs.len() > (exponent + 1) as usize {
                 result.insert(
                     result.len() + exponent as usize - sig_figs.len(),
                     Token::OneByte(0x3A),
@@ -383,6 +385,7 @@ mod tests {
         reconstruct_test_case!(zero, "/snippets/parsing/numbers/zero.txt");
         reconstruct_test_case!(one, "/snippets/parsing/numbers/one.txt");
         reconstruct_test_case!(ten, "/snippets/parsing/numbers/ten.txt"); // also checks not(10->RED)
+        reconstruct_test_case!(twelve, "/snippets/parsing/numbers/twelve.txt");
         reconstruct_test_case!(
             leading_decimal,
             "/snippets/parsing/numbers/leading-decimal.txt"
