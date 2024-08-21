@@ -1,6 +1,6 @@
+use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
-use lazy_static::lazy_static;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Model {
@@ -117,12 +117,10 @@ lazy_static! {
         model: Model::LATEST,
         os_version: "9.99.99".to_string(),
     };
-
     pub static ref LATEST_MONO: Version = Version {
         model: Model::TI84P,
         os_version: "9.99.99".to_string(),
     };
-
     pub static ref EARLIEST_COLOR: Version = Version {
         model: Model::TI84PCSE,
         os_version: "0.0.0".to_string(),

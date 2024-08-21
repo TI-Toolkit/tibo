@@ -15,6 +15,7 @@ lazy_static = "1.5.0"
 quick-xml = { version = "0.36.0", features = ["serde", "serialize", "serde-types"] }
 serde = { version = "1.0.171", features = ["serde_derive"] }
 radix_trie = "0.2"
+chrono = "0.4"
 
 itertools = { version = "0.13.0", optional = true }
 deku = { version="0.17.0", optional = true }
