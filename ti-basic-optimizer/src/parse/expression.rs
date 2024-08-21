@@ -121,8 +121,8 @@ impl<'a> Builder<'a> {
 
     fn open_paren(&mut self) {
         self.paren_depth += 1;
-        self.operator_stack.push(Token::OneByte(0x10)); // (
         self.check_implicit_mul();
+        self.operator_stack.push(Token::OneByte(0x10)); // (
     }
 
     fn close_paren(&mut self) {
@@ -313,4 +313,6 @@ mod tests {
         scrabble_score,
         "/snippets/parsing/formulas/scrabble-score.txt"
     );
+
+    test_case!(iverson_bracket, "/snippets/parsing/formulas/iverson-bracket.txt");
 }
