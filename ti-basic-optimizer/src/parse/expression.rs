@@ -162,7 +162,7 @@ impl<'a> Builder<'a> {
         while self.operator_stack.last().is_some_and(
             |tok| {
                 UnOp::recognize(*tok)
-                    || (BinOp::recognize_precedence(*tok).unwrap_or(0) > precedence)
+                    || (BinOp::recognize_precedence(*tok).unwrap_or(0) >= precedence)
             }, // always false if not BinOp
         ) {
             let token = self.operator_stack.pop().unwrap();
