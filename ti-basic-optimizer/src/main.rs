@@ -15,7 +15,7 @@ enum LoadError {
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
-pub struct Settings {
+pub struct Args {
     #[arg(
         long = "txt",
         group = "in_file",
@@ -30,14 +30,6 @@ pub struct Settings {
         help = "Provide a tokenized 8xp to optimize. Mutually exclusive with --txt."
     )]
     path_to_8xp_file: Option<PathBuf>,
-    /*#[arg(long = "size", group = "level")]
-    pub size_opts: bool,
-    #[arg(long = "speed", group = "level")]
-    pub speed_opts: bool,*/
-}
-
-fn optimize(tokens: Tokens, settings: Settings) {
-    todo!()
 }
 
 fn parse_8xp(path_buf: PathBuf) -> Result<parse::Program, LoadError> {
@@ -49,17 +41,20 @@ fn parse_8xp(path_buf: PathBuf) -> Result<parse::Program, LoadError> {
     let mut tokens = ti_program.read_tokens();
     Ok(Program::from_tokens(
         &mut tokens,
-        &Tokenizer::new(Version::latest(), "en"),
+        &Tokenizer::new(titokens::version::LATEST.clone(), "en"),
     ))
 }
 
 fn parse_txt(path_buf: PathBuf) -> Result<parse::Program, LoadError> {
     let string = fs::read_to_string(path_buf).map_err(LoadError::IoError)?;
-    Ok(Program::from_text(&string, Version::latest()))
+    Ok(Program::from_text(
+        &string,
+        titokens::version::LATEST.clone(),
+    ))
 }
 
 fn main() {
-    let settings = Settings::parse();
+    let settings = Args::parse();
 
     let loaded = if let Some(path_buf) = settings.path_to_8xp_file {
         parse_8xp(path_buf)
