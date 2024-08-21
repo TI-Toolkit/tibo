@@ -271,6 +271,7 @@ impl Reconstruct for tifloats::Float {
         }
 
         let exponent = self.exponent();
+
         if exponent < 0 {
             result.push(Token::OneByte(0x3A));
             // need |exponent|-1 zeros
@@ -286,12 +287,12 @@ impl Reconstruct for tifloats::Float {
                 .collect::<Vec<_>>(),
         );
 
-        if exponent > 0 {
+        if exponent >= 0 {
             // eg. 12 has sigfigs=2, exponent=1, does not need decimal point
-            // eg. 12.3 has sigfigs=3, exponent=1, needs decimal point
-            if sig_figs.len() > (exponent + 1) as usize {
+            // eg. 1.5 has sigfigs=2, exponent=0, needs decimal point
+            if sig_figs.len() > 1 + exponent as usize {
                 result.insert(
-                    result.len() + exponent as usize - sig_figs.len(),
+                    result.len() + 1 + exponent as usize - sig_figs.len(),
                     Token::OneByte(0x3A),
                 );
             } else if exponent as usize >= sig_figs.len() {
@@ -361,6 +362,12 @@ mod tests {
             "/snippets/parsing/numbers/zero.txt",
             tifloat!(0x00000000000000 * 10 ^ 0)
         );
+
+        parse_test_case!(
+            three_halves,
+            "/snippets/parsing/numbers/three-halves.txt",
+            tifloat!(0x15000000000000 * 10 ^ 0)
+        );
     }
 
     mod reconstruct {
@@ -386,6 +393,7 @@ mod tests {
         reconstruct_test_case!(one, "/snippets/parsing/numbers/one.txt");
         reconstruct_test_case!(ten, "/snippets/parsing/numbers/ten.txt"); // also checks not(10->RED)
         reconstruct_test_case!(twelve, "/snippets/parsing/numbers/twelve.txt");
+        reconstruct_test_case!(three_halves, "/snippets/parsing/numbers/three-halves.txt");
         reconstruct_test_case!(
             leading_decimal,
             "/snippets/parsing/numbers/leading-decimal.txt"
