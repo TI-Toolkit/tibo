@@ -1,7 +1,7 @@
 use crate::error_reporting::LineReport;
 pub use crate::parse::components::{
     binary_operator::BinOp,
-    data_access::{ListAccess, ListIndexable, MatrixAccess, MatrixIndexable},
+    data_access::{ListIndex, ListIndexable, MatrixIndex, MatrixIndexable},
     delvar_target::DelVarTarget,
     equation_name::EquationName,
     function_call::FunctionCall,
@@ -61,8 +61,8 @@ pub enum Operand {
     NumericVarName(NumericVarName),
     ListName(ListName),
     MatrixName(MatrixName),
-    ListAccess(ListAccess),
-    MatrixAccess(MatrixAccess),
+    ListAccess(ListIndex),
+    MatrixAccess(MatrixIndex),
     StringName(StringName),
     Ans,
     GetKey,
@@ -98,7 +98,7 @@ impl Parse for Operand {
                 if let Some(name) = MatrixName::parse(token, more)? {
                     if more.peek() == Some(Token::OneByte(0x10)) {
                         Ok(
-                            MatrixAccess::parse(name.into(), more.next().unwrap(), more)?
+                            MatrixIndex::parse(name.into(), more.next().unwrap(), more)?
                                 .map(Self::MatrixAccess),
                         )
                     } else {
@@ -111,7 +111,7 @@ impl Parse for Operand {
             Token::TwoByte(0x5D, _) | Token::OneByte(0xEB) => {
                 if let Some(name) = ListName::parse(token, more)? {
                     if more.peek() == Some(Token::OneByte(0x10)) {
-                        Ok(ListAccess::parse(name.into(), more.next().unwrap(), more)?
+                        Ok(ListIndex::parse(name.into(), more.next().unwrap(), more)?
                             .map(Self::ListAccess))
                     } else {
                         Ok(Some(Self::ListName(name)))
@@ -120,7 +120,7 @@ impl Parse for Operand {
                     Ok(None)
                 }
             }
-            Token::TwoByte(0x63, 0x2A) => Ok(Some(Self::TblInput)),
+            Token::TwoByte(0x63, 0x2A) => Ok(Some(Self::TblInput)), // todo: TblIndex(n) list access
             Token::TwoByte(0x63, 0x00..=0x2A | 0x32..=0x38) => {
                 Ok(WindowVarName::parse(token, more)?.map(Self::WindowVarName))
             }

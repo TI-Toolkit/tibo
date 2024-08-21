@@ -11,8 +11,6 @@ mod tests {
                 name.ends_with(".txt") && !name.to_lowercase().contains("readme")
             })
         {
-            print!("{}", file.path().display());
-
             let tokenizer = titokens::Tokenizer::new(
                 titokens::Version {
                     model: titokens::Model::TI84PCE,

@@ -5,8 +5,11 @@
 use std::mem;
 use titokens::Token;
 
-use crate::parse::{components::{Operand, Operator}, expression::Expression};
-use crate::parse::components::{ListAccess, MatrixAccess};
+use crate::parse::components::{ListIndex, MatrixIndex};
+use crate::parse::{
+    components::{Operand, Operator},
+    expression::Expression,
+};
 
 impl Expression {
     /// Maximizes the number of parentheses which occur at the end of the line.
@@ -70,11 +73,11 @@ impl Expression {
                 }
             }
 
-            Expression::Operand(Operand::ListAccess(ListAccess{index, ..})) => {
+            Expression::Operand(Operand::ListAccess(ListIndex { index, .. })) => {
                 1 + index.optimize_parentheses()
             }
 
-            Expression::Operand(Operand::MatrixAccess(MatrixAccess{col, ..})) => {
+            Expression::Operand(Operand::MatrixAccess(MatrixIndex { col, .. })) => {
                 1 + col.optimize_parentheses()
             }
 

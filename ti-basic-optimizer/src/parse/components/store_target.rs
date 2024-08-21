@@ -1,7 +1,7 @@
 use crate::error_reporting::{next_or_err, LineReport};
 use crate::parse::{
     components::{
-        EquationName, ListAccess, ListName, MatrixAccess, MatrixName, NumericVarName, StringName,
+        EquationName, ListIndex, ListName, MatrixIndex, MatrixName, NumericVarName, StringName,
         WindowVarName,
     },
     Parse,
@@ -13,8 +13,8 @@ pub enum StoreTarget {
     NumericVar(NumericVarName),
     List(ListName),
     Matrix(MatrixName),
-    ListAccess(ListAccess),
-    MatrixAccess(MatrixAccess),
+    ListIndex(ListIndex),
+    MatrixIndex(MatrixIndex),
     ListResizing(ListName),
     MatrixResizing(MatrixName),
     String(StringName),
@@ -34,8 +34,8 @@ impl Parse for StoreTarget {
                 if let Some(name) = MatrixName::parse(token, more)? {
                     if more.peek() == Some(Token::OneByte(0x10)) {
                         Ok(
-                            MatrixAccess::parse(name.into(), more.next().unwrap(), more)?
-                                .map(Self::MatrixAccess),
+                            MatrixIndex::parse(name.into(), more.next().unwrap(), more)?
+                                .map(Self::MatrixIndex),
                         )
                     } else {
                         Ok(Some(Self::Matrix(name)))
@@ -47,8 +47,8 @@ impl Parse for StoreTarget {
             Token::TwoByte(0x5D, _) | Token::OneByte(0xEB) => {
                 if let Some(name) = ListName::parse(token, more)? {
                     if more.peek() == Some(Token::OneByte(0x10)) {
-                        Ok(ListAccess::parse(name.into(), more.next().unwrap(), more)?
-                            .map(Self::ListAccess))
+                        Ok(ListIndex::parse(name.into(), more.next().unwrap(), more)?
+                            .map(Self::ListIndex))
                     } else {
                         Ok(Some(Self::List(name)))
                     }

@@ -1,5 +1,9 @@
 use crate::error_reporting::{expect_some, expect_tok, next_or_err, LineReport};
-use crate::parse::{components::{ListName, MatrixName, Operand}, expression::Expression, Parse, Reconstruct};
+use crate::parse::{
+    components::{ListName, MatrixName, Operand},
+    expression::Expression,
+    Parse, Reconstruct,
+};
 use titokens::{Token, Tokens, Version};
 
 #[derive(Debug, Clone)]
@@ -15,8 +19,20 @@ impl From<ListName> for ListIndexable {
     }
 }
 
+impl TryFrom<&Operand> for ListIndexable {
+    type Error = ();
+
+    fn try_from(value: &Operand) -> Result<Self, Self::Error> {
+        match value {
+            Operand::ListName(x) => Ok(Self::List(*x)),
+            Operand::Ans => Ok(Self::Ans),
+            _ => Err(()),
+        }
+    }
+}
+
 impl Reconstruct for ListIndexable {
-    fn reconstruct(&self, version: Version) -> Vec<Token> {
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
         match self {
             Self::List(name) => name.reconstruct(version),
             Self::TblInput => vec![Token::TwoByte(0x63, 0x2A)],
@@ -38,7 +54,7 @@ impl From<MatrixName> for MatrixIndexable {
 }
 
 impl Reconstruct for MatrixIndexable {
-    fn reconstruct(&self, version: Version) -> Vec<Token> {
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
         match self {
             Self::Matrix(name) => name.reconstruct(version),
             Self::Ans => vec![Token::OneByte(0x72)],
@@ -46,14 +62,26 @@ impl Reconstruct for MatrixIndexable {
     }
 }
 
+impl TryFrom<&Operand> for MatrixIndexable {
+    type Error = ();
+
+    fn try_from(value: &Operand) -> Result<Self, Self::Error> {
+        match value {
+            Operand::MatrixName(x) => Ok(Self::Matrix(*x)),
+            Operand::Ans => Ok(Self::Ans),
+            _ => Err(()),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
-pub struct MatrixAccess {
+pub struct MatrixIndex {
     pub subject: MatrixIndexable,
     pub row: Box<Expression>,
     pub col: Box<Expression>,
 }
 
-impl MatrixAccess {
+impl MatrixIndex {
     pub fn parse(
         subject: MatrixIndexable,
         token: Token,
@@ -85,7 +113,7 @@ impl MatrixAccess {
             more.next();
         }
 
-        Ok(Some(MatrixAccess {
+        Ok(Some(MatrixIndex {
             subject,
             row: Box::new(row),
             col: Box::new(col),
@@ -94,12 +122,12 @@ impl MatrixAccess {
 }
 
 #[derive(Debug, Clone)]
-pub struct ListAccess {
+pub struct ListIndex {
     pub subject: ListIndexable,
     pub index: Box<Expression>,
 }
 
-impl ListAccess {
+impl ListIndex {
     pub fn parse(
         subject: ListIndexable,
         token: Token,
@@ -120,7 +148,7 @@ impl ListAccess {
             more.next();
         }
 
-        Ok(Some(ListAccess {
+        Ok(Some(ListIndex {
             subject,
             index: Box::new(index),
         }))

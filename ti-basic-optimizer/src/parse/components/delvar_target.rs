@@ -1,7 +1,7 @@
 use crate::error_reporting::LineReport;
 use crate::parse::{
     components::{
-        EquationName, ImageName, ListAccess, ListName, MatrixAccess, MatrixName, NumericVarName,
+        EquationName, ImageName, ListIndex, ListName, MatrixIndex, MatrixName, NumericVarName,
         PicName, StringName,
     },
     Parse,
@@ -13,8 +13,8 @@ pub enum DelVarTarget {
     NumericVar(NumericVarName),
     List(ListName),
     Matrix(MatrixName),
-    ListAccess(ListAccess),
-    MatrixAccess(MatrixAccess),
+    ListAccess(ListIndex),
+    MatrixAccess(MatrixIndex),
     String(StringName),
     Pic(PicName),
     Image(ImageName),
@@ -33,7 +33,7 @@ impl Parse for DelVarTarget {
                 if let Some(name) = MatrixName::parse(token, more)? {
                     if more.peek() == Some(Token::OneByte(0x10)) {
                         Ok(
-                            MatrixAccess::parse(name.into(), more.next().unwrap(), more)?
+                            MatrixIndex::parse(name.into(), more.next().unwrap(), more)?
                                 .map(Self::MatrixAccess),
                         )
                     } else {
@@ -46,7 +46,7 @@ impl Parse for DelVarTarget {
             Token::TwoByte(0x5D, _) | Token::OneByte(0xEB) => {
                 if let Some(name) = ListName::parse(token, more)? {
                     if more.peek() == Some(Token::OneByte(0x10)) {
-                        Ok(ListAccess::parse(name.into(), more.next().unwrap(), more)?
+                        Ok(ListIndex::parse(name.into(), more.next().unwrap(), more)?
                             .map(Self::ListAccess))
                     } else {
                         Ok(Some(Self::List(name)))
