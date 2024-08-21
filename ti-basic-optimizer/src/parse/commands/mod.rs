@@ -5,11 +5,12 @@ mod generic;
 pub use control_flow::ControlFlow;
 pub use delvar_chain::DelVarChain;
 pub use generic::Generic;
+use std::iter::once;
 
 use crate::error_reporting::{expect_some, next_or_err, LineReport};
 use crate::parse::components::StoreTarget;
-use crate::parse::{expression::Expression, Parse};
-use titokens::{Token, Tokens};
+use crate::parse::{expression::Expression, Parse, Reconstruct};
+use titokens::{Token, Tokens, Version};
 
 #[derive(Clone, Debug)]
 pub enum Command {
@@ -36,7 +37,6 @@ impl Parse for Command {
 
                 Ok(Some(Command::Store(
                     expr,
-
                     expect_some!(
                         StoreTarget::parse(next_or_err!(more)?, more)?,
                         more,
@@ -44,15 +44,30 @@ impl Parse for Command {
                         "a store target",
                         "Parsing failed here."
                     )
-                    .map_err(|x| {
-                        x.with_label(arrow_pos, "Store arrow is here.")
-                    })?,
+                    .map_err(|x| x.with_label(arrow_pos, "Store arrow is here."))?,
                 )))
             } else {
                 Ok(Some(Command::Expression(expr)))
             }
         } else {
             Ok(None)
+        }
+    }
+}
+
+impl Reconstruct for Command {
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+        match self {
+            Command::ControlFlow(x) => x.reconstruct(version),
+            Command::Generic(x) => x.reconstruct(version),
+            Command::DelVarChain(x) => x.reconstruct(version),
+            Command::Expression(x) => x.reconstruct(version),
+            Command::Store(x, target) => x
+                .reconstruct(version)
+                .into_iter()
+                .chain(once(Token::OneByte(0x04)))
+                .chain(target.reconstruct(version))
+                .collect(),
         }
     }
 }

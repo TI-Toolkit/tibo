@@ -1,7 +1,8 @@
 use crate::error_reporting::{expect_some, expect_tok, next_or_err, LineReport};
 use crate::parse::expression::Expression;
-use crate::parse::Parse;
-use titokens::{Token, Tokens};
+use crate::parse::{Parse, Reconstruct};
+use std::iter::once;
+use titokens::{Token, Tokens, Version};
 
 #[derive(Clone, Debug)]
 pub struct ForLoop {
@@ -9,6 +10,8 @@ pub struct ForLoop {
     pub start: Expression,
     pub end: Expression,
     pub step: Option<Expression>,
+
+    pub has_ending_paren: bool,
 }
 
 impl Parse for ForLoop {
@@ -65,6 +68,31 @@ impl Parse for ForLoop {
             start,
             end,
             step,
+            has_ending_paren: false,
         }))
+    }
+}
+
+impl Reconstruct for ForLoop {
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+        once(Token::OneByte(0xD3))
+            .chain(self.iterator.reconstruct(version))
+            .chain(once(Token::OneByte(0x2B)))
+            .chain(self.start.reconstruct(version))
+            .chain(once(Token::OneByte(0x2B)))
+            .chain(self.start.reconstruct(version))
+            .chain(if let Some(step) = &self.step {
+                once(Token::OneByte(0x2B))
+                    .chain(step.reconstruct(version))
+                    .collect::<Vec<_>>()
+            } else {
+                vec![]
+            })
+            .chain(if self.has_ending_paren {
+                vec![Token::OneByte(0x11)]
+            } else {
+                vec![]
+            })
+            .collect()
     }
 }

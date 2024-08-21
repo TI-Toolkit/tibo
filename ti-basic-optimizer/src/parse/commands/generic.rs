@@ -1,7 +1,9 @@
+use itertools::Itertools;
+
 use crate::error_reporting::LineReport;
 use crate::parse::expression::Expression;
-use crate::parse::Parse;
-use titokens::{Token, Tokens};
+use crate::parse::{Parse, Reconstruct};
+use titokens::{Token, Tokens, Version};
 
 #[derive(Clone, Debug)]
 pub struct Generic {
@@ -23,7 +25,8 @@ impl Parse for Generic {
         let command_position = more.current_position() - 1;
 
         if Generic::accepts_parameters(token) {
-            if let Some(mut next) = more.next() {
+            if !matches!(more.peek(), Some(Token::OneByte(0x3E | 0x3F)) | None) {
+                let mut next = more.next().unwrap();
                 while let Some(expr) = Expression::parse(next, more)? {
                     command.arguments.push(expr);
 
@@ -54,6 +57,22 @@ impl Parse for Generic {
         }
 
         Ok(Some(command))
+    }
+}
+
+impl Reconstruct for Generic {
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+        use std::iter::once;
+
+        once(self.kind)
+            .chain(
+                self.arguments
+                    .iter()
+                    .map(|x| x.reconstruct(version))
+                    .intersperse(vec![Token::OneByte(0x2B)])
+                    .flatten(),
+            )
+            .collect()
     }
 }
 
@@ -282,3 +301,6 @@ impl Generic {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {}

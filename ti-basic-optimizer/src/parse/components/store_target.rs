@@ -34,10 +34,8 @@ impl Parse for StoreTarget {
             Token::TwoByte(0x5C, _) => {
                 if let Some(name) = MatrixName::parse(token, more)? {
                     if more.peek() == Some(Token::OneByte(0x10)) {
-                        Ok(
-                            MatrixIndex::parse(name.into(), more.next().unwrap(), more)?
-                                .map(Self::MatrixIndex),
-                        )
+                        Ok(MatrixIndex::parse(name.into(), more.next().unwrap(), more)?
+                            .map(Self::MatrixIndex))
                     } else {
                         Ok(Some(Self::Matrix(name)))
                     }

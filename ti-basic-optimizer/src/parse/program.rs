@@ -1,6 +1,8 @@
+use itertools::Itertools;
+
 use crate::error_reporting::LineReport;
 use crate::parse::commands::Command;
-use crate::parse::Parse;
+use crate::parse::{Parse, Reconstruct};
 use titokens::{tokenizer, Token, Tokenizer, Tokens, Version};
 
 pub struct Program {
@@ -83,6 +85,19 @@ impl Program {
     }
 }
 
+impl Reconstruct for Program {
+    /// We choose to exclusively output 0x3F as a newline character because it means we never have
+    /// to worry about closing strings.
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+        self.lines
+            .iter()
+            .map(|line| line.reconstruct(version))
+            .intersperse(vec![Token::OneByte(0x3F)])
+            .flatten()
+            .collect()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -104,10 +119,47 @@ mod tests {
         assert_eq!(program.lines.len(), 0);
     }
 
-    #[test]
-    fn parse() {
-        let mut tokens = load_test_data("/programs/bouncy_ball/raw.txt");
-        let tokenizer = Tokenizer::new(test_version(), "en");
-        let program = Program::from_tokens(&mut tokens, &tokenizer);
+    /// TI-Toolkit defines "round-trip" as the following process:
+    /// 1. Import original
+    /// 2. Export to file A
+    /// 3. Import file A
+    /// 4. Export to file B
+    /// 5. Then, check A == B
+    mod round_trip {
+        use super::*;
+        macro_rules! round_trip {
+            ($name: ident, $path: expr, $debug: expr) => {
+                #[test]
+                fn $name() {
+                    let mut original = load_test_data($path);
+                    let tokenizer = Tokenizer::new(test_version(), "en");
+                    let original_program = Program::from_tokens(&mut original, &tokenizer);
+                    let a = original_program.reconstruct(&test_version());
+                    let a_program = Program::from_tokens(
+                        &mut Tokens::from_vec(a.clone(), Some(test_version())),
+                        &tokenizer,
+                    );
+                    let b = a_program.reconstruct(&test_version());
+
+                    if $debug {
+                        dbg!(
+                            Tokens::from_vec(a.clone(), Some(test_version())).to_string(&tokenizer)
+                        );
+                        dbg!(
+                            Tokens::from_vec(b.clone(), Some(test_version())).to_string(&tokenizer)
+                        );
+                    }
+
+                    assert_eq!(a, b);
+                }
+            };
+
+            ($name: ident, $path: expr) => {
+                round_trip!($name, $path, false);
+            };
+        }
+
+        round_trip!(bouncy_ball, "/programs/bouncy_ball/raw.txt");
+        round_trip!(stick_hero, "/programs/stick_hero/raw.txt", true);
     }
 }

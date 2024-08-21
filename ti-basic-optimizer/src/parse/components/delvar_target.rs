@@ -32,10 +32,8 @@ impl Parse for DelVarTarget {
             Token::TwoByte(0x5C, _) => {
                 if let Some(name) = MatrixName::parse(token, more)? {
                     if more.peek() == Some(Token::OneByte(0x10)) {
-                        Ok(
-                            MatrixIndex::parse(name.into(), more.next().unwrap(), more)?
-                                .map(Self::MatrixAccess),
-                        )
+                        Ok(MatrixIndex::parse(name.into(), more.next().unwrap(), more)?
+                            .map(Self::MatrixAccess))
                     } else {
                         Ok(Some(Self::Matrix(name)))
                     }

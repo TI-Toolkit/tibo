@@ -1,6 +1,6 @@
 use crate::Tokens;
-use deku::prelude::*;
 use chrono::prelude::*;
+use deku::prelude::*;
 
 pub const DATA_COMMENT_TOOL_ID: u8 = 0x72;
 
@@ -62,7 +62,7 @@ pub struct TIProgram {
 impl TIProgram {
     pub fn force_data_comment(&mut self, tool_id: Option<u8>) {
         match &self.comment {
-            Comment::DataComment(x) => {},
+            Comment::DataComment(x) => {}
 
             Comment::Bytes(first, data) => {
                 let local: DateTime<Local> = Local::now();
@@ -74,15 +74,15 @@ impl TIProgram {
                     magic: 0xB8,
                     tool_id: tool_id.unwrap_or(DATA_COMMENT_TOOL_ID),
                     version: [0; 9],
-                    export_day: ((day/10) << 4) + (day%10),
-                    export_month: ((month/10) << 4) + (month%10),
-                    export_year_top: (((year/1000) << 4) + ((year%1000)/100)) as u8,
-                    export_year_bottom: ((((year%100)/10) << 4) + (year%10)) as u8,
+                    export_day: ((day / 10) << 4) + (day % 10),
+                    export_month: ((month / 10) << 4) + (month % 10),
+                    export_year_top: (((year / 1000) << 4) + ((year % 1000) / 100)) as u8,
+                    export_year_bottom: ((((year % 100) / 10) << 4) + (year % 10)) as u8,
                     author_len: 0,
                     author: vec![],
                     rest: vec![],
                 })
-            },
+            }
         }
     }
 

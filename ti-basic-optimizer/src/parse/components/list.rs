@@ -53,7 +53,7 @@ impl Reconstruct for TIList {
                 self.entries
                     .iter()
                     .map(|x| x.reconstruct(version))
-                    .intersperse_with(|| vec![Token::OneByte(0x2B)])
+                    .intersperse(vec![Token::OneByte(0x2B)])
                     .flatten(),
             )
             .chain(once(Token::OneByte(0x09)))

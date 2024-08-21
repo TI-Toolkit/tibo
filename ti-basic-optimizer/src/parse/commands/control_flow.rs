@@ -6,9 +6,10 @@ use crate::error_reporting::{expect_some, next_or_err, LineReport};
 use crate::parse::{
     commands::control_flow::{for_loop::ForLoop, isds::IsDs, menu::Menu},
     expression::Expression,
-    Parse,
+    Parse, Reconstruct,
 };
-use titokens::{Token, Tokens};
+use std::iter::once;
+use titokens::{Token, Tokens, Version};
 
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub struct LabelName(u16);
@@ -29,6 +30,17 @@ impl Parse for LabelName {
         }
 
         Ok(Some(LabelName(data)))
+    }
+}
+
+impl Reconstruct for LabelName {
+    fn reconstruct(&self, _version: &Version) -> Vec<Token> {
+        let mut data = vec![Token::OneByte((self.0 >> 8) as u8)];
+        if self.0 & 0xFF != 0 {
+            data.push(Token::OneByte((self.0 & 0xFF) as u8));
+        }
+
+        data
     }
 }
 
@@ -72,6 +84,28 @@ impl Parse for ControlFlow {
             Token::OneByte(0xDB) => Ok(Some(CF::DsLt(expect_some!(IsDs::parse(token, more)?, more, "Ds>( statement")?))),
             Token::OneByte(0xE6) => Ok(Some(CF::Menu(expect_some!(Menu::parse(token, more)?, more, "Menu(")?))),
             _ => Ok(None),
+        }
+    }
+}
+
+impl Reconstruct for ControlFlow {
+    #[rustfmt::skip]
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+        match self {
+            ControlFlow::If(cond) => once(Token::OneByte(0xCE)).chain(cond.reconstruct(version)).collect(),
+            ControlFlow::Then => vec![Token::OneByte(0xCF)],
+            ControlFlow::Else => vec![Token::OneByte(0xD0)],
+            ControlFlow::While(cond) => once(Token::OneByte(0xD1)).chain(cond.reconstruct(version)).collect(),
+            ControlFlow::Repeat(cond) => once(Token::OneByte(0xD2)).chain(cond.reconstruct(version)).collect(),
+            ControlFlow::For(for_loop) => for_loop.reconstruct(version),
+            ControlFlow::End => vec![Token::OneByte(0xD4)],
+            ControlFlow::Return => vec![Token::OneByte(0xD5)],
+            ControlFlow::Lbl(label) => once(Token::OneByte(0xD6)).chain(label.reconstruct(version)).collect(),
+            ControlFlow::Goto(label) => once(Token::OneByte(0xD7)).chain(label.reconstruct(version)).collect(),
+            ControlFlow::Stop => vec![Token::OneByte(0xD9)],
+            ControlFlow::IsGt(isds) => once(Token::OneByte(0xDA)).chain(isds.reconstruct(version)).collect(),
+            ControlFlow::DsLt(isds) => once(Token::OneByte(0xDB)).chain(isds.reconstruct(version)).collect(),
+            ControlFlow::Menu(menu) => menu.reconstruct(version),
         }
     }
 }

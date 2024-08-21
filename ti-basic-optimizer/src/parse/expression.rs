@@ -314,5 +314,8 @@ mod tests {
         "/snippets/parsing/formulas/scrabble-score.txt"
     );
 
-    test_case!(iverson_bracket, "/snippets/parsing/formulas/iverson-bracket.txt");
+    test_case!(
+        iverson_bracket,
+        "/snippets/parsing/formulas/iverson-bracket.txt"
+    );
 }

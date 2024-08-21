@@ -1,6 +1,7 @@
 use crate::error_reporting::{expect_some, expect_tok, next_or_err, LineReport};
-use crate::parse::{commands::control_flow::LabelName, expression::Expression, Parse};
-use titokens::{Token, Tokens};
+use crate::parse::{commands::control_flow::LabelName, expression::Expression, Parse, Reconstruct};
+use std::iter::once;
+use titokens::{Token, Tokens, Version};
 
 #[derive(Clone, Debug)]
 pub struct Menu {
@@ -77,13 +78,32 @@ impl Parse for Menu {
     }
 }
 
+impl Reconstruct for Menu {
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+        once(Token::OneByte(0xE6))
+            .chain(self.title.reconstruct(version))
+            .chain(
+                self.option_titles
+                    .iter()
+                    .zip(self.option_labels.iter())
+                    .flat_map(|(title, label)| {
+                        once(Token::OneByte(0x2B))
+                            .chain(title.reconstruct(version))
+                            .chain(once(Token::OneByte(0x2B)))
+                            .chain(label.reconstruct(version))
+                    }),
+            )
+            .collect()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test_files::load_test_data;
+    use test_files::{load_test_data, test_version};
 
     #[test]
-    fn works() {
+    fn parse() {
         let mut tokens = load_test_data("/snippets/parsing/commands/menu.txt");
 
         let menu = Menu::parse(tokens.next().unwrap(), &mut tokens)
@@ -95,5 +115,16 @@ mod tests {
             menu.option_labels,
             vec![LabelName(0x504C), LabelName(0x5345), LabelName(0x3000)]
         )
+    }
+
+    #[test]
+    fn reconstruct() {
+        let data = load_test_data("/snippets/parsing/commands/menu.txt");
+        let mut tokens = data.clone();
+        let menu = Menu::parse(tokens.next().unwrap(), &mut tokens)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(menu.reconstruct(&test_version()), data.collect::<Vec<_>>());
     }
 }
