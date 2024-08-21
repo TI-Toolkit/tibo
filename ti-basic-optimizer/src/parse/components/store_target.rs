@@ -4,9 +4,10 @@ use crate::parse::{
         EquationName, ListIndex, ListName, MatrixIndex, MatrixName, NumericVarName, StringName,
         WindowVarName,
     },
-    Parse,
+    Parse, Reconstruct,
 };
-use titokens::{Token, Tokens};
+use std::iter::once;
+use titokens::{Token, Tokens, Version};
 
 #[derive(Clone, Debug)]
 pub enum StoreTarget {
@@ -77,6 +78,28 @@ impl Parse for StoreTarget {
             }
             Token::OneByte(0xAB) => Ok(Some(Self::RandSeed)),
             _ => Ok(None),
+        }
+    }
+}
+
+impl Reconstruct for StoreTarget {
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+        match self {
+            Self::NumericVar(x) => x.reconstruct(version),
+            Self::List(x) => x.reconstruct(version),
+            Self::Matrix(x) => x.reconstruct(version),
+            Self::ListIndex(x) => x.reconstruct(version),
+            Self::MatrixIndex(x) => x.reconstruct(version),
+            Self::String(x) => x.reconstruct(version),
+            Self::WindowVar(x) => x.reconstruct(version),
+            Self::ListResizing(list) => once(Token::OneByte(0xB5))
+                .chain(list.reconstruct(version))
+                .collect(),
+            Self::MatrixResizing(matrix) => once(Token::OneByte(0xB5))
+                .chain(matrix.reconstruct(version))
+                .collect(),
+            Self::Equation(x) => x.reconstruct(version),
+            Self::RandSeed => vec![Token::OneByte(0xAB)],
         }
     }
 }

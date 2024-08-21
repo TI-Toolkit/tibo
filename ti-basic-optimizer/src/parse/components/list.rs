@@ -1,8 +1,8 @@
 use crate::error_reporting::{next_or_err, LineReport};
-use crate::parse::components::function_call::FunctionCall;
 use crate::parse::expression::Expression;
-use crate::parse::Parse;
-use titokens::{Token, Tokens};
+use crate::parse::{Parse, Reconstruct};
+use itertools::Itertools;
+use titokens::{Token, Tokens, Version};
 
 #[derive(Clone, Debug)]
 pub struct TIList {
@@ -41,5 +41,22 @@ impl Parse for TIList {
         }
 
         Ok(Some(TIList { entries }))
+    }
+}
+
+impl Reconstruct for TIList {
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+        use std::iter::once;
+
+        once(Token::OneByte(0x08))
+            .chain(
+                self.entries
+                    .iter()
+                    .map(|x| x.reconstruct(version))
+                    .intersperse_with(|| vec![Token::OneByte(0x2B)])
+                    .flatten(),
+            )
+            .chain(once(Token::OneByte(0x09)))
+            .collect()
     }
 }

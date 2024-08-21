@@ -1,6 +1,8 @@
-use crate::parse::components::OperatorKind;
+use crate::parse::components::{ListIndexable, MatrixIndexable, Operator, OperatorKind};
 use crate::parse::expression::Expression;
-use titokens::Token;
+use crate::parse::Reconstruct;
+use std::iter::once;
+use titokens::{Token, Version};
 
 #[derive(Clone, Debug)]
 pub struct BinOp {
@@ -71,6 +73,53 @@ impl BinOp {
 
     pub fn precedence(&self) -> u8 {
         Self::recognize_precedence(self.kind).unwrap()
+    }
+}
+
+impl Reconstruct for BinOp {
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+        let mut implicit_mul_viable = true;
+        let mut result = match &*self.left {
+            Expression::Operator(Operator::Binary(left_binop))
+                if left_binop.precedence() < self.precedence() =>
+            {
+                once(Token::OneByte(0x10))
+                    .chain(left_binop.reconstruct(version))
+                    .chain(once(Token::OneByte(0x11)))
+                    .collect()
+            }
+
+            Expression::Operand(operand) => {
+                if self.kind == Token::OneByte(0x82)
+                    && (ListIndexable::try_from(operand).is_ok()
+                        || MatrixIndexable::try_from(operand).is_ok())
+                {
+                    implicit_mul_viable = false;
+                }
+
+                operand.reconstruct(version)
+            }
+
+            expr => expr.reconstruct(version),
+        };
+
+        if self.kind != Token::OneByte(0x82) || !implicit_mul_viable {
+            result.push(self.kind)
+        }
+
+        match &*self.right {
+            Expression::Operator(Operator::Binary(left_binop))
+                if left_binop.precedence() <= self.precedence() =>
+            {
+                result.push(Token::OneByte(0x10));
+                result.extend(left_binop.reconstruct(version));
+                result.push(Token::OneByte(0x11));
+            }
+
+            expr => result.extend(expr.reconstruct(version)),
+        }
+
+        result
     }
 }
 

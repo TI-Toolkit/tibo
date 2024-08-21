@@ -13,5 +13,5 @@ pub(crate) trait Parse: Sized {
 }
 
 pub(crate) trait Reconstruct {
-    fn reconstruct(&self, version: titokens::Version) -> Vec<Token>;
+    fn reconstruct(&self, version: &Version) -> Vec<Token>;
 }

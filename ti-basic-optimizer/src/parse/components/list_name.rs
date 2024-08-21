@@ -65,7 +65,7 @@ impl Parse for ListName {
 }
 
 impl Reconstruct for ListName {
-    fn reconstruct(&self, version: Version) -> Vec<Token> {
+    fn reconstruct(&self, _version: &Version) -> Vec<Token> {
         match self {
             ListName::Default(tok) => vec![*tok],
             ListName::Custom(name) => std::iter::once(Token::OneByte(0xEB))
@@ -82,8 +82,8 @@ impl Reconstruct for ListName {
 
 #[cfg(test)]
 mod tests {
-    use test_files::test_version;
     use super::*;
+    use test_files::test_version;
 
     #[test]
     fn parse() {
@@ -100,6 +100,6 @@ mod tests {
         let parsed = ListName::parse(tokens.next().unwrap(), &mut tokens)
             .unwrap()
             .unwrap();
-        assert_eq!(parsed.reconstruct(test_version()), name);
+        assert_eq!(parsed.reconstruct(&test_version()), name);
     }
 }

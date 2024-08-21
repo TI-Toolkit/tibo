@@ -17,8 +17,8 @@ pub use crate::parse::components::{
     window_var_name::WindowVarName,
 };
 use crate::parse::expression::Expression;
-use crate::parse::Parse;
-use titokens::{Token, Tokens};
+use crate::parse::{Parse, Reconstruct};
+use titokens::{Token, Tokens, Version};
 
 mod binary_operator;
 mod data_access;
@@ -54,6 +54,17 @@ pub enum Operator {
 
 pub(crate) trait OperatorKind {
     fn recognize(token: Token) -> bool;
+}
+
+impl Reconstruct for Operator {
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+        match self {
+            Operator::Binary(binop) => binop.reconstruct(version),
+            Operator::Unary(unop) => unop.reconstruct(version),
+            Operator::FunctionCall(function_call) => function_call.reconstruct(version),
+            _ => unreachable!(),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -125,6 +136,29 @@ impl Parse for Operand {
                 Ok(WindowVarName::parse(token, more)?.map(Self::WindowVarName))
             }
             _ => Ok(numeric_literal::parse_constant(token, more)),
+        }
+    }
+}
+
+impl Reconstruct for Operand {
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+        match self {
+            Operand::NumericVarName(x) => x.reconstruct(version),
+            Operand::ListName(x) => x.reconstruct(version),
+            Operand::MatrixName(x) => x.reconstruct(version),
+            Operand::ListAccess(x) => x.reconstruct(version),
+            Operand::MatrixAccess(x) => x.reconstruct(version),
+            Operand::StringName(x) => x.reconstruct(version),
+            Operand::Ans => vec![Token::OneByte(0x72)],
+            Operand::GetKey => vec![Token::OneByte(0xAD)],
+            Operand::GetDate => vec![Token::TwoByte(0xEF, 0x09)],
+            Operand::StartTmr => vec![Token::TwoByte(0xEF, 0x0B)],
+            Operand::NumericLiteral(x) => x.reconstruct(version),
+            Operand::StringLiteral(x) => x.reconstruct(version),
+            Operand::ListLiteral(x) => x.reconstruct(version),
+            Operand::TblInput => vec![Token::TwoByte(0x63, 0x2A)],
+            Operand::WindowVarName(x) => x.reconstruct(version),
+            Operand::Expression(x) => x.reconstruct(version),
         }
     }
 }

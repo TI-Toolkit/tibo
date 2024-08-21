@@ -4,9 +4,9 @@ use crate::parse::{
         EquationName, ImageName, ListIndex, ListName, MatrixIndex, MatrixName, NumericVarName,
         PicName, StringName,
     },
-    Parse,
+    Parse, Reconstruct,
 };
-use titokens::{Token, Tokens};
+use titokens::{Token, Tokens, Version};
 
 #[derive(Clone, Debug)]
 pub enum DelVarTarget {
@@ -59,6 +59,22 @@ impl Parse for DelVarTarget {
             Token::TwoByte(0xEF, _) => Ok(ImageName::parse(token, more)?.map(Self::Image)),
             Token::TwoByte(0x5E, _) => Ok(EquationName::parse(token, more)?.map(Self::Equation)),
             _ => Ok(None),
+        }
+    }
+}
+
+impl Reconstruct for DelVarTarget {
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+        match self {
+            DelVarTarget::NumericVar(x) => x.reconstruct(version),
+            DelVarTarget::List(x) => x.reconstruct(version),
+            DelVarTarget::Matrix(x) => x.reconstruct(version),
+            DelVarTarget::ListAccess(x) => x.reconstruct(version),
+            DelVarTarget::MatrixAccess(x) => x.reconstruct(version),
+            DelVarTarget::String(x) => x.reconstruct(version),
+            DelVarTarget::Pic(x) => x.reconstruct(version),
+            DelVarTarget::Image(x) => x.reconstruct(version),
+            DelVarTarget::Equation(x) => x.reconstruct(version),
         }
     }
 }

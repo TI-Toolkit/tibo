@@ -16,7 +16,7 @@ impl Parse for PicName {
 }
 
 impl Reconstruct for PicName {
-    fn reconstruct(&self, version: Version) -> Vec<Token> {
+    fn reconstruct(&self, _version: &Version) -> Vec<Token> {
         vec![self.0]
     }
 }
@@ -34,7 +34,7 @@ impl Parse for ImageName {
 }
 
 impl Reconstruct for ImageName {
-    fn reconstruct(&self, version: Version) -> Vec<Token> {
+    fn reconstruct(&self, _version: &Version) -> Vec<Token> {
         vec![self.0]
     }
 }

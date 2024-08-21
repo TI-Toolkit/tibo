@@ -15,7 +15,7 @@ impl Parse for StringName {
 }
 
 impl Reconstruct for StringName {
-    fn reconstruct(&self, version: Version) -> Vec<Token> {
+    fn reconstruct(&self, _version: &Version) -> Vec<Token> {
         vec![self.0]
     }
 }

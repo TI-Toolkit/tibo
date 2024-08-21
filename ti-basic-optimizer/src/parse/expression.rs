@@ -1,7 +1,7 @@
 use crate::error_reporting::LineReport;
 use crate::parse::components::*;
-use crate::parse::Parse;
-use titokens::{Token, Tokens};
+use crate::parse::{Parse, Reconstruct};
+use titokens::{Token, Tokens, Version};
 
 #[derive(Debug, Clone)]
 pub enum Expression {
@@ -244,34 +244,48 @@ impl Parse for Expression {
     }
 }
 
+impl Reconstruct for Expression {
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+        match self {
+            Expression::Operator(operator) => operator.reconstruct(version),
+            Expression::Operand(operand) => operand.reconstruct(version),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test_files::load_test_data;
+    use test_files::{load_test_data, test_version};
+    use titokens::{version, Tokenizer};
 
-    #[test]
-    fn quadratic() {
-        let mut tokens = load_test_data("/snippets/parsing/formulas/quadratic.txt");
+    macro_rules! test_case {
+        ($name: ident, $path: expr, $version: expr) => {
+            #[test]
+            fn $name() {
+                let data = load_test_data($path);
+                let mut tokens = data.clone();
 
-        let builder = Builder::new(&mut tokens);
-        let _ = builder.build();
+                let builder = Builder::new(&mut tokens);
+                let parsed = builder.build().unwrap().unwrap();
+
+                // dbg!(Tokenizer::new($version.clone(), "en").stringify(&parsed.reconstruct($version)));
+                assert_eq!(parsed.reconstruct($version), data.collect::<Vec<_>>());
+            }
+        };
+
+        ($name: ident, $path: expr) => {
+            test_case!($name, $path, &test_files::test_version());
+        };
     }
 
-    #[test]
-    fn unop() {
-        let mut tokens = load_test_data("/snippets/parsing/formulas/unop.txt");
-
-        let builder = Builder::new(&mut tokens);
-        let _ = builder.build();
-    }
-
-    #[test]
-    fn manual_sum() {
-        let mut tokens = load_test_data("/snippets/parsing/formulas/manual-sum.txt");
-
-        let builder = Builder::new(&mut tokens);
-        let _ = builder.build();
-    }
+    test_case!(quadratic, "/snippets/parsing/formulas/quadratic.txt");
+    test_case!(unop, "/snippets/parsing/formulas/unop.txt");
+    test_case!(
+        manual_sum,
+        "/snippets/parsing/formulas/manual-sum.txt",
+        &*version::LATEST_MONO
+    );
 
     #[test]
     fn function_closing() {
@@ -285,4 +299,18 @@ mod tests {
             Some(Expression::Operator(Operator::Binary(_)))
         ));
     }
+
+    test_case!(
+        exp_assoc1,
+        "/snippets/parsing/associativity/exponentiation.txt"
+    );
+    test_case!(
+        exp_assoc2,
+        "/snippets/parsing/associativity/exponentiation2.txt"
+    );
+
+    test_case!(
+        scrabble_score,
+        "/snippets/parsing/formulas/scrabble-score.txt"
+    );
 }

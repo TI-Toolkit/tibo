@@ -1,7 +1,8 @@
 use crate::error_reporting::LineReport;
 use crate::parse::expression::Expression;
-use crate::parse::Parse;
-use titokens::{Token, Tokens};
+use crate::parse::{Parse, Reconstruct};
+use itertools::Itertools;
+use titokens::{Token, Tokens, Version};
 
 #[derive(Clone, Debug)]
 pub struct FunctionCall {
@@ -53,6 +54,23 @@ impl Parse for FunctionCall {
             kind: token,
             arguments,
         }))
+    }
+}
+
+impl Reconstruct for FunctionCall {
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+        use std::iter::once;
+
+        once(self.kind)
+            .chain(
+                self.arguments
+                    .iter()
+                    .map(|x| x.reconstruct(version))
+                    .intersperse_with(|| vec![Token::OneByte(0x2B)])
+                    .flatten(),
+            )
+            .chain(once(Token::OneByte(0x11)))
+            .collect()
     }
 }
 

@@ -15,7 +15,7 @@ impl Parse for MatrixName {
 }
 
 impl Reconstruct for MatrixName {
-    fn reconstruct(&self, version: Version) -> Vec<Token> {
+    fn reconstruct(&self, _version: &Version) -> Vec<Token> {
         vec![self.0]
     }
 }

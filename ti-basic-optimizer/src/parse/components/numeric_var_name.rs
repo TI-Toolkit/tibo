@@ -16,7 +16,7 @@ impl Parse for NumericVarName {
 }
 
 impl Reconstruct for NumericVarName {
-    fn reconstruct(&self, _version: Version) -> Vec<Token> {
+    fn reconstruct(&self, _version: &Version) -> Vec<Token> {
         vec![self.0]
     }
 }

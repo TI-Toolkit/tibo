@@ -235,14 +235,14 @@ pub(crate) fn parse_constant(tok: Token, more: &mut Tokens) -> Option<Operand> {
 }
 
 impl Reconstruct for tifloats::Float {
-    fn reconstruct(&self, version: Version) -> Vec<Token> {
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
         let sig_figs = self.significant_figures();
 
         // If they're available, using constants is faster than using the numbers themselves because
         // retrieving an already-parsed number from memory is faster than parsing it again.
         //
         // for long decimals like pi and e, this also saves size
-        if version > *titokens::version::EARLIEST_COLOR {
+        if *version > *titokens::version::EARLIEST_COLOR {
             if (tifloat!(0x0010000000000000 * 10 ^ 1)..=tifloat!(0x0024000000000000 * 10 ^ 1))
                 .contains(self)
             {
@@ -367,15 +367,13 @@ mod tests {
             ($name:ident, $path:expr) => {
                 #[test]
                 fn $name() {
-                    use test_files::{load_test_data, test_version};
+                    use test_files::load_test_data;
                     let data = load_test_data($path);
                     let mut tokens = data.clone();
                     let mut builder = Builder::new(&mut tokens);
 
                     assert_eq!(
-                        builder
-                            .parse()
-                            .reconstruct(titokens::version::LATEST_MONO.clone()),
+                        builder.parse().reconstruct(&titokens::version::LATEST_MONO),
                         data.collect::<Vec<_>>()
                     );
                 }

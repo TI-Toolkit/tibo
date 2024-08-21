@@ -121,6 +121,19 @@ impl MatrixIndex {
     }
 }
 
+impl Reconstruct for MatrixIndex {
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+        let mut data = self.subject.reconstruct(version);
+        data.push(Token::OneByte(0x10));
+        data.extend(self.row.reconstruct(version));
+        data.push(Token::OneByte(0x2B));
+        data.extend(self.col.reconstruct(version));
+        data.push(Token::OneByte(0x11));
+
+        data
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ListIndex {
     pub subject: ListIndexable,
@@ -152,5 +165,16 @@ impl ListIndex {
             subject,
             index: Box::new(index),
         }))
+    }
+}
+
+impl Reconstruct for ListIndex {
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+        let mut data = self.subject.reconstruct(version);
+        data.push(Token::OneByte(0x10));
+        data.extend(self.index.reconstruct(version));
+        data.push(Token::OneByte(0x11));
+
+        data
     }
 }

@@ -43,8 +43,9 @@ impl Parse for TIString {
 }
 
 impl Reconstruct for TIString {
-    fn reconstruct(&self, version: Version) -> Vec<Token> {
-        let mut tokens = vec![Token::OneByte(0x2A)];
+    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+        let mut tokens = Vec::with_capacity(self.data.len() + 2);
+        tokens.push(Token::OneByte(0x2A));
         tokens.extend_from_slice(&self.data);
         tokens.push(Token::OneByte(0x2A));
 

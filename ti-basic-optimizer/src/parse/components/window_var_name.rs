@@ -16,7 +16,7 @@ impl Parse for WindowVarName {
 }
 
 impl Reconstruct for WindowVarName {
-    fn reconstruct(&self, _version: Version) -> Vec<Token> {
+    fn reconstruct(&self, _version: &Version) -> Vec<Token> {
         vec![self.0]
     }
 }
