@@ -314,6 +314,3 @@ impl Generic {
         )
     }
 }
-
-#[cfg(test)]
-mod tests {}

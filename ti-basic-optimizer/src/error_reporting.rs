@@ -117,6 +117,7 @@ pub struct LineReport {
     location: usize,
     message: String,
     suggestion: Option<String>,
+    code: Option<usize>,
 
     labels: Vec<(LabelKind, String)>,
 }
@@ -128,6 +129,7 @@ impl LineReport {
             location,
             message: message.to_string(),
             suggestion: suggestion.map(|x| x.to_string()),
+            code: None,
 
             labels: vec![],
         }
@@ -145,6 +147,13 @@ impl LineReport {
     pub fn with_label(mut self, location: usize, message: &str) -> Self {
         self.labels
             .push((LabelKind::Single(location), message.to_string()));
+
+        self
+    }
+
+    #[must_use]
+    pub fn with_code(mut self, error_code: usize) -> Self {
+        self.code = Some(error_code);
 
         self
     }
@@ -169,6 +178,10 @@ impl LineReport {
 
         if let Some(help) = self.suggestion {
             builder = builder.with_help(help);
+        }
+
+        if let Some(code) = self.code {
+            builder = builder.with_code(code);
         }
 
         builder

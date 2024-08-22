@@ -16,6 +16,7 @@ struct Builder<'a> {
     paren_depth: u64,
     implicit_mul_allowed: bool,
 
+    expression_start: usize,
     tokens: &'a mut Tokens,
 }
 
@@ -29,6 +30,7 @@ impl<'a> Builder<'a> {
             paren_depth: 0,
             implicit_mul_allowed: false,
 
+            expression_start: tokens.current_position(),
             tokens,
         }
     }
@@ -45,34 +47,53 @@ impl<'a> Builder<'a> {
         self.finalize()
     }
 
+    fn error(&self, code: usize) -> LineReport {
+        LineReport::new(
+            self.tokens.current_position(),
+            "Expression parsing error",
+            Some("Please report this if this is unexpected."),
+        )
+        .with_span_label(
+            self.expression_start..self.tokens.current_position(),
+            "This may be incorrect",
+        )
+        .with_label(
+            self.tokens.current_position(),
+            "This token triggered the error.",
+        )
+        .with_code(code)
+    }
+
     fn process_next(&mut self, next: Token) -> Result<bool, LineReport> {
-        if !self.process_operand_stack(next)? {
+        let result = if !self.process_operand_stack(next)? {
             match next {
                 Token::OneByte(0x10) => {
                     // (
-                    self.open_paren();
+                    self.open_paren()?;
                     Ok(true)
                 }
 
                 Token::OneByte(0x11) if self.paren_depth > 0 => {
                     // )
-                    self.close_paren();
+                    self.close_paren()?;
                     Ok(true)
                 }
 
                 Token::OneByte(0xB0) => {
+                    // ~
                     self.operator_stack.push(next);
+                    self.implicit_mul_allowed = false;
 
                     Ok(true)
                 }
 
                 _ => {
                     if BinOp::recognize(next) {
-                        self.push_binop(next);
+                        self.push_binop(next)?;
 
                         Ok(true)
                     } else if UnOp::recognize(next) {
-                        self.process_operator(next);
+                        self.process_operator(next)?;
 
                         Ok(true)
                     } else {
@@ -82,12 +103,16 @@ impl<'a> Builder<'a> {
             }
         } else {
             Ok(true)
-        }
+        };
+
+        // dbg!(next, self.implicit_mul_allowed, &self.operator_stack, &self.operand_stack);
+
+        result
     }
 
     fn process_operand_stack(&mut self, next: Token) -> Result<bool, LineReport> {
         if let Some(operand) = Operand::parse(next, self.tokens)? {
-            self.check_implicit_mul();
+            self.check_implicit_mul()?;
 
             self.emit_operand(operand.clone());
 
@@ -101,9 +126,11 @@ impl<'a> Builder<'a> {
                 }
             }
 
+            self.implicit_mul_allowed = true;
+
             Ok(true)
         } else if let Some(func) = FunctionCall::parse(next, self.tokens)? {
-            self.check_implicit_mul();
+            self.check_implicit_mul()?;
             self.operand_stack
                 .push(Expression::Operator(Operator::FunctionCall(func)));
             self.implicit_mul_allowed = true;
@@ -119,17 +146,19 @@ impl<'a> Builder<'a> {
         self.implicit_mul_allowed = true;
     }
 
-    fn open_paren(&mut self) {
+    fn open_paren(&mut self) -> Result<(), LineReport> {
         self.paren_depth += 1;
-        self.check_implicit_mul();
+        self.check_implicit_mul()?;
         self.operator_stack.push(Token::OneByte(0x10)); // (
+
+        Ok(())
     }
 
-    fn close_paren(&mut self) {
+    fn close_paren(&mut self) -> Result<(), LineReport> {
         self.paren_depth -= 1;
 
         while let Some(&token) = self.operator_stack.last() {
-            if !self.process_operator(token) {
+            if !self.process_operator(token)? {
                 break;
             } else {
                 self.operator_stack.pop();
@@ -142,17 +171,21 @@ impl<'a> Builder<'a> {
 
             self.implicit_mul_allowed = true;
         } else {
-            panic!("Closing parenthesis assertion failed, please report this.")
+            Err(self.error(1))?;
         }
+
+        Ok(())
     }
 
-    fn check_implicit_mul(&mut self) {
+    fn check_implicit_mul(&mut self) -> Result<(), LineReport> {
         if self.implicit_mul_allowed {
-            self.push_binop(Token::OneByte(0x82)); // *
+            self.push_binop(Token::OneByte(0x82))?; // *
         }
+
+        Ok(())
     }
 
-    fn push_binop(&mut self, operator: Token) {
+    fn push_binop(&mut self, operator: Token) -> Result<(), LineReport> {
         assert!(BinOp::recognize(operator));
 
         let precedence = BinOp::recognize_precedence(operator).unwrap();
@@ -167,15 +200,17 @@ impl<'a> Builder<'a> {
         ) {
             let token = self.operator_stack.pop().unwrap();
 
-            self.process_operator(token);
+            self.process_operator(token)?;
         }
 
         self.operator_stack.push(operator);
+
+        Ok(())
     }
 
-    fn process_operator(&mut self, operator: Token) -> bool {
+    fn process_operator(&mut self, operator: Token) -> Result<bool, LineReport> {
         if UnOp::recognize(operator) {
-            let child = self.operand_stack.pop().unwrap();
+            let child = self.operand_stack.pop().ok_or_else(|| self.error(5))?;
 
             self.operand_stack
                 .push(Expression::Operator(Operator::Unary(UnOp {
@@ -183,12 +218,14 @@ impl<'a> Builder<'a> {
                     child: Box::new(child),
                 })));
 
-            self.implicit_mul_allowed = false;
+            if operator != Token::OneByte(0xB0) {
+                self.implicit_mul_allowed = true
+            }
 
-            true
+            Ok(true)
         } else if BinOp::recognize(operator) {
-            let right = self.operand_stack.pop().unwrap();
-            let left = self.operand_stack.pop().unwrap();
+            let right = self.operand_stack.pop().ok_or_else(|| self.error(2))?;
+            let left = self.operand_stack.pop().ok_or_else(|| self.error(3))?;
 
             self.operand_stack
                 .push(Expression::Operator(Operator::Binary(BinOp {
@@ -199,9 +236,9 @@ impl<'a> Builder<'a> {
 
             self.implicit_mul_allowed = false;
 
-            true
+            Ok(true)
         } else {
-            false
+            Ok(false)
         }
     }
 
@@ -216,17 +253,13 @@ impl<'a> Builder<'a> {
     fn finalize(&mut self) -> Result<Option<Expression>, LineReport> {
         while let Some(x) = self.operator_stack.pop() {
             if !matches!(x, Token::OneByte(0x10)) {
-                // (
-                self.process_operator(x);
+                // everything besides (
+                self.process_operator(x)?;
             }
         }
 
         if !self.valid() {
-            Err(LineReport::new(
-                self.tokens.current_position(),
-                "Expression parsing error",
-                Some("Please report this!"),
-            ))?;
+            Err(self.error(4))?;
         }
 
         assert!(self.valid());
@@ -236,7 +269,7 @@ impl<'a> Builder<'a> {
 }
 
 impl Parse for Expression {
-    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+    fn parse(_token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
         more.backtrack_once();
         let builder = Builder::new(more);
 

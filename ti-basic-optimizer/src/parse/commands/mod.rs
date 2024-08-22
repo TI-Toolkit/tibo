@@ -71,3 +71,17 @@ impl Reconstruct for Command {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use test_files::load_test_data;
+    use super::*;
+
+    #[test]
+    fn store() {
+        let mut tokens = load_test_data("/snippets/parsing/commands/store.txt");
+
+        let cmd = Command::parse(tokens.next().unwrap(), &mut tokens).unwrap().unwrap();
+        assert!(matches!(cmd, Command::Store(_, _)));
+    }
+}
