@@ -298,8 +298,25 @@ impl Reconstruct for tifloats::Float {
             } else if exponent as usize >= sig_figs.len() {
                 // need exponent+1-sigfigs zeros
                 // eg. 10=1.0 * 10^1 (has sigfigs=1, exponent=1, zeros=1)
-                for i in 0..(exponent as usize + 1 - sig_figs.len()) {
-                    result.push(Token::OneByte(0x30));
+                let zeros = exponent as usize + 1 - sig_figs.len();
+                // Per my testing, if we need to add two or more zeros, it's faster to use |E
+                // it's also obviously smaller for > 2 zeros
+                if zeros >= 2 {
+                    // |E2 = 1|E2 = 100
+                    if sig_figs == vec![1] {
+                        result.pop(); // remove the 1
+                    }
+
+                    result.push(Token::OneByte(0x3B));
+                    if exponent > 10 {
+                        result.push(Token::OneByte(0x30 + (exponent as u8 / 10)));
+                    }
+
+                    result.push(Token::OneByte(0x30 + (exponent as u8 % 10)));
+                } else {
+                    if zeros == 1 {
+                        result.push(Token::OneByte(0x30));
+                    }
                 }
             }
         }
@@ -368,6 +385,18 @@ mod tests {
             "/snippets/parsing/numbers/three-halves.txt",
             tifloat!(0x15000000000000 * 10 ^ 0)
         );
+
+        parse_test_case!(
+            million,
+            "/snippets/parsing/numbers/million.txt",
+            tifloat!(0x10000000000000 * 10 ^ 6)
+        );
+
+        parse_test_case!(
+            three_hundred,
+            "/snippets/parsing/numbers/three-hundred.txt",
+            tifloat!(0x30000000000000 * 10 ^ 2)
+        );
     }
 
     mod reconstruct {
@@ -394,6 +423,8 @@ mod tests {
         reconstruct_test_case!(ten, "/snippets/parsing/numbers/ten.txt"); // also checks not(10->RED)
         reconstruct_test_case!(twelve, "/snippets/parsing/numbers/twelve.txt");
         reconstruct_test_case!(three_halves, "/snippets/parsing/numbers/three-halves.txt");
+        reconstruct_test_case!(million, "/snippets/parsing/numbers/million.txt");
+        reconstruct_test_case!(three_hundred, "/snippets/parsing/numbers/three-hundred.txt");
         reconstruct_test_case!(
             leading_decimal,
             "/snippets/parsing/numbers/leading-decimal.txt"
