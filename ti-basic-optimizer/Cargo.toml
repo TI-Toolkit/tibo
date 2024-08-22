@@ -13,3 +13,6 @@ deku = "0.17.0"
 
 [dev-dependencies]
 test-files = { path = "../test-files" }
+
+[features]
+round-trip = []

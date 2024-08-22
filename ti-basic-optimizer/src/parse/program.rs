@@ -83,12 +83,10 @@ impl Program {
 
         Ok(Program { lines })
     }
-}
 
-impl Reconstruct for Program {
-    /// We choose to exclusively output 0x3F as a newline character because it means we never have
-    /// to worry about closing strings.
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+    pub fn reconstruct(&self, version: &Version) -> Vec<Token> {
+        // We choose to exclusively output 0x3F as a newline character because it means we never have
+        // to worry about closing strings.
         self.lines
             .iter()
             .map(|line| line.reconstruct(version))

@@ -64,8 +64,23 @@ fn main() {
         parse_txt(path_buf)
     };
 
-    if loaded.is_ok() {
+    if let Ok(program) = loaded {
         print!("Loaded program successfully!");
+        if cfg!(feature = "round-trip") {
+            let version = titokens::version::LATEST.clone();
+
+            let tokenizer = Tokenizer::new(version.clone(), "en");
+            let a = program.reconstruct(&version);
+            let a_program =
+                Program::from_tokens(&mut Tokens::from_vec(a.clone(), Some(version.clone())), &tokenizer);
+            let b = a_program.reconstruct(&version);
+
+            if a != b {
+                panic!("test failed");
+            }
+
+            print!("{}", tokenizer.stringify(&b));
+        }
     } else {
         loaded.unwrap();
     }
