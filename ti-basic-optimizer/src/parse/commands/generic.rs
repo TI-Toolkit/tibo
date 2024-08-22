@@ -247,6 +247,17 @@ impl Generic {
             | 0xEF74 // Thin
             | 0xEF75 // DotThin
             | 0xEF96 // Wait
+            | 0xF2 // OneVarStats
+            | 0xF3 // TwoVarStats
+            | 0xF4 // LinRegABX
+            | 0xF5 // ExpReg
+            | 0xF6 // LnReg
+            | 0xF7 // PwrReg
+            | 0xF8 // MedMed
+            | 0xF9 // QuadReg
+            | 0xFA // ClrList
+            | 0xFB // ClrTable
+            | 0xFF // LinRegAXB
         )
     }
 
@@ -275,6 +286,8 @@ impl Generic {
             | 0xEF67
             | 0xEF6C
             | 0xEF96
+            | 0xF3..=0xFB
+            | 0xFF
         )
     }
 
