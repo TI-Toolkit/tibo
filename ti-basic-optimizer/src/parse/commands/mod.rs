@@ -1,6 +1,7 @@
 mod control_flow;
 mod delvar_chain;
 mod generic;
+mod prgm;
 
 pub use control_flow::ControlFlow;
 pub use delvar_chain::DelVarChain;
@@ -8,6 +9,7 @@ pub use generic::Generic;
 use std::iter::once;
 
 use crate::error_reporting::{expect_some, next_or_err, LineReport};
+use crate::parse::commands::prgm::ProgramName;
 use crate::parse::components::StoreTarget;
 use crate::parse::{expression::Expression, Parse, Reconstruct};
 use titokens::{Token, Tokens, Version};
