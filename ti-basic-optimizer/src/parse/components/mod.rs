@@ -6,7 +6,7 @@ pub use crate::parse::components::{
     equation_name::EquationName,
     function_call::FunctionCall,
     list::TIList,
-    list_name::ListName,
+    list_name::{ListName, DEFAULT_LISTS},
     matrix_name::MatrixName,
     numeric_var_name::NumericVarName,
     pic_image_name::{ImageName, PicName},

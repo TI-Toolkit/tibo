@@ -2,6 +2,7 @@ mod control_flow;
 mod delvar_chain;
 mod generic;
 mod prgm;
+mod setupeditor;
 
 pub use control_flow::ControlFlow;
 pub use delvar_chain::DelVarChain;
@@ -10,6 +11,7 @@ use std::iter::once;
 
 use crate::error_reporting::{expect_some, next_or_err, LineReport};
 use crate::parse::commands::prgm::ProgramName;
+use crate::parse::commands::setupeditor::SetUpEditor;
 use crate::parse::components::StoreTarget;
 use crate::parse::{expression::Expression, Parse, Reconstruct};
 use titokens::{Token, Tokens, Version};
@@ -19,6 +21,7 @@ pub enum Command {
     ControlFlow(ControlFlow),
     Generic(Generic),
     DelVarChain(DelVarChain),
+    SetUpEditor(SetUpEditor),
     Expression(Expression),
     Store(Expression, StoreTarget),
     ProgramInvocation(ProgramName),
@@ -34,6 +37,8 @@ impl Parse for Command {
         } else if let Some(cmd) = DelVarChain::parse(token, more)?.map(Command::DelVarChain) {
             Ok(Some(cmd))
         } else if let Some(cmd) = ProgramName::parse(token, more)?.map(Command::ProgramInvocation) {
+            Ok(Some(cmd))
+        } else if let Some(cmd) = SetUpEditor::parse(token, more)?.map(Self::SetUpEditor) {
             Ok(Some(cmd))
         } else if let Some(expr) = Expression::parse(token, more)? {
             if more.peek() == Some(Token::OneByte(0x04)) {
@@ -66,6 +71,7 @@ impl Reconstruct for Command {
             Command::ControlFlow(x) => x.reconstruct(version),
             Command::Generic(x) => x.reconstruct(version),
             Command::DelVarChain(x) => x.reconstruct(version),
+            Command::SetUpEditor(x) => x.reconstruct(version),
             Command::Expression(x) => x.reconstruct(version),
             Command::ProgramInvocation(x) => x.reconstruct(version),
             Command::Store(x, target) => x

@@ -3,7 +3,16 @@ use crate::parse::components::NumericVarName;
 use crate::parse::{Parse, Reconstruct};
 use titokens::{Token, Tokens, Version};
 
-#[derive(Copy, Clone, Debug)]
+pub const DEFAULT_LISTS: [ListName; 6] = [
+    ListName::Default(Token::TwoByte(0x5D, 0x00)),
+    ListName::Default(Token::TwoByte(0x5D, 0x01)),
+    ListName::Default(Token::TwoByte(0x5D, 0x02)),
+    ListName::Default(Token::TwoByte(0x5D, 0x03)),
+    ListName::Default(Token::TwoByte(0x5D, 0x04)),
+    ListName::Default(Token::TwoByte(0x5D, 0x05)),
+];
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum ListName {
     /// L1, L2, ..., L6
     Default(Token),
