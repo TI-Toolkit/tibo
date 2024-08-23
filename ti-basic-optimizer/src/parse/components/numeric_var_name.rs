@@ -3,7 +3,7 @@ use crate::parse::{Parse, Reconstruct};
 use titokens::{Token, Tokens, Version};
 
 #[derive(Copy, Clone, Debug)]
-pub struct NumericVarName(Token);
+pub struct NumericVarName(pub Token);
 
 impl Parse for NumericVarName {
     fn parse(token: Token, _more: &mut Tokens) -> Result<Option<Self>, LineReport> {

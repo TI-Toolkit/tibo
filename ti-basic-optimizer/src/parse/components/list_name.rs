@@ -1,13 +1,83 @@
 use crate::error_reporting::LineReport;
+use crate::parse::components::NumericVarName;
 use crate::parse::{Parse, Reconstruct};
 use titokens::{Token, Tokens, Version};
 
 #[derive(Copy, Clone, Debug)]
 pub enum ListName {
+    /// L1, L2, ..., L6
     Default(Token),
     /// Must match the TI-ASCII bytes for `[A-Zθ][A-Zθ0-9]{,4}`, and be zero
     /// filled at the end.
     Custom([u8; 5]),
+}
+
+impl TryFrom<NumericVarName> for ListName {
+    type Error = ();
+
+    fn try_from(value: NumericVarName) -> Result<Self, Self::Error> {
+        match value.0 {
+            Token::OneByte(x) => Ok(ListName::Custom([x, 0, 0, 0, 0])),
+            _ => Err(()),
+        }
+    }
+}
+
+impl ListName {
+    /// Parse the up-to-5-character custom list name, without the beginning |L.
+    pub fn parse_custom_name(tokens: &mut Tokens) -> Result<Option<Self>, LineReport> {
+        let start_position = tokens.current_position() - 1;
+        let mut name = [0_u8; 5];
+        let mut index = 0;
+
+        while let Some(token) = tokens.next() {
+            if (index == 0 && token.is_alpha()) || (index > 0 && token.is_alphanumeric()) {
+                // 0-indexed
+                if index >= 5 {
+                    return Err(LineReport::new(
+                        start_position,
+                        "List name has too many characters (max 5)",
+                        None,
+                    )
+                    .with_span_label(
+                        start_position..start_position + 7,
+                        "This part is a valid list name.",
+                    )
+                    .with_label(tokens.current_position(), "The part starting here is not."))?;
+                }
+
+                name[index] = token.byte();
+                index += 1;
+            } else {
+                tokens.backtrack_once();
+                break;
+            }
+        }
+
+        if index == 0 {
+            Err(LineReport::new(
+                start_position,
+                "Expected a list name.",
+                Some("List names start with a letter A-θ."),
+            ))?;
+        }
+
+        Ok(Some(ListName::Custom(name)))
+    }
+
+    /// Reconstruct the up-to-5-character custom list name, without the beginning |L, or the
+    /// original token if this is a default list.
+    pub fn reconstruct_custom_name(&self, version: &Version) -> Vec<Token> {
+        match self {
+            ListName::Default(_) => self.reconstruct(version),
+            ListName::Custom(name) => name
+                .iter()
+                .filter(|&&x| (x > 0))
+                .cloned()
+                .map(Token::OneByte)
+                .collect(),
+        }
+    }
 }
 
 impl Parse for ListName {
@@ -17,48 +87,7 @@ impl Parse for ListName {
             Token::TwoByte(0x5D, 0x00..=0x05) => Ok(Some(ListName::Default(token))),
 
             // EB, |L
-            Token::OneByte(0xEB) => {
-                let start_position = tokens.current_position() - 1;
-                let mut name = [0_u8; 5];
-                let mut index = 0;
-
-                while let Some(token) = tokens.next() {
-                    if (index == 0 && token.is_alpha()) || (index > 0 && token.is_alphanumeric()) {
-                        // 0-indexed
-                        if index >= 5 {
-                            return Err(LineReport::new(
-                                start_position,
-                                "List name has too many characters (max 5)",
-                                None,
-                            )
-                            .with_span_label(
-                                start_position..start_position + 7,
-                                "This part is a valid list name.",
-                            )
-                            .with_label(
-                                tokens.current_position(),
-                                "The part starting here is not.",
-                            ))?;
-                        }
-
-                        name[index] = token.byte();
-                        index += 1;
-                    } else {
-                        tokens.backtrack_once();
-                        break;
-                    }
-                }
-
-                if index == 0 {
-                    Err(LineReport::new(
-                        start_position,
-                        "Expected a list name.",
-                        Some("List names start with a letter A-θ."),
-                    ))?;
-                }
-
-                Ok(Some(ListName::Custom(name)))
-            }
+            Token::OneByte(0xEB) => ListName::parse_custom_name(tokens),
             _ => Ok(None),
         }
     }

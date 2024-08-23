@@ -11,6 +11,7 @@ use titokens::{Token, Tokens, Version};
 
 #[derive(Clone, Debug)]
 pub enum StoreTarget {
+    NumericVarOrListName(NumericVarName),
     NumericVar(NumericVarName),
     List(ListName),
     Matrix(MatrixName),
@@ -27,7 +28,15 @@ pub enum StoreTarget {
 impl Parse for StoreTarget {
     fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
         match token {
-            Token::OneByte(0x41..=0x5B) | Token::TwoByte(0x62, 0x21) => {
+            Token::OneByte(0x41..=0x5B) => {
+                if matches!(more.peek(), Some(Token::OneByte(0x41..=0x5B))) {
+                    more.backtrack_once();
+                    Ok(ListName::parse_custom_name(more)?.map(Self::List))
+                } else {
+                    Ok(NumericVarName::parse(token, more)?.map(Self::NumericVarOrListName))
+                }
+            }
+            Token::TwoByte(0x62, 0x21) => {
                 Ok(NumericVarName::parse(token, more)?.map(Self::NumericVar))
             }
             Token::TwoByte(0xAA, _) => Ok(StringName::parse(token, more)?.map(Self::String)),
@@ -83,8 +92,9 @@ impl Parse for StoreTarget {
 impl Reconstruct for StoreTarget {
     fn reconstruct(&self, version: &Version) -> Vec<Token> {
         match self {
+            Self::NumericVarOrListName(x) => x.reconstruct(version),
             Self::NumericVar(x) => x.reconstruct(version),
-            Self::List(x) => x.reconstruct(version),
+            Self::List(x) => x.reconstruct_custom_name(version),
             Self::Matrix(x) => x.reconstruct(version),
             Self::ListIndex(x) => x.reconstruct(version),
             Self::MatrixIndex(x) => x.reconstruct(version),
