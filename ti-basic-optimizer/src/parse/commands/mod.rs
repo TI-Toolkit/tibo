@@ -21,6 +21,7 @@ pub enum Command {
     DelVarChain(DelVarChain),
     Expression(Expression),
     Store(Expression, StoreTarget),
+    ProgramInvocation(ProgramName),
 }
 
 impl Parse for Command {
@@ -31,6 +32,8 @@ impl Parse for Command {
         } else if let Some(cmd) = ControlFlow::parse(token, more)?.map(Command::ControlFlow) {
             Ok(Some(cmd))
         } else if let Some(cmd) = DelVarChain::parse(token, more)?.map(Command::DelVarChain) {
+            Ok(Some(cmd))
+        } else if let Some(cmd) = ProgramName::parse(token, more)?.map(Command::ProgramInvocation) {
             Ok(Some(cmd))
         } else if let Some(expr) = Expression::parse(token, more)? {
             if more.peek() == Some(Token::OneByte(0x04)) {
@@ -64,6 +67,7 @@ impl Reconstruct for Command {
             Command::Generic(x) => x.reconstruct(version),
             Command::DelVarChain(x) => x.reconstruct(version),
             Command::Expression(x) => x.reconstruct(version),
+            Command::ProgramInvocation(x) => x.reconstruct(version),
             Command::Store(x, target) => x
                 .reconstruct(version)
                 .into_iter()
@@ -76,14 +80,16 @@ impl Reconstruct for Command {
 
 #[cfg(test)]
 mod tests {
-    use test_files::load_test_data;
     use super::*;
+    use test_files::load_test_data;
 
     #[test]
     fn store() {
         let mut tokens = load_test_data("/snippets/parsing/commands/store.txt");
 
-        let cmd = Command::parse(tokens.next().unwrap(), &mut tokens).unwrap().unwrap();
+        let cmd = Command::parse(tokens.next().unwrap(), &mut tokens)
+            .unwrap()
+            .unwrap();
         assert!(matches!(cmd, Command::Store(_, _)));
     }
 }
