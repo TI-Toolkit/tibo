@@ -1,4 +1,4 @@
-use crate::parse::components::{ListIndexable, MatrixIndexable, Operator, OperatorKind};
+use crate::parse::components::{ListIndexable, MatrixIndexable, Operand, Operator, OperatorKind};
 use crate::parse::expression::Expression;
 use crate::parse::Reconstruct;
 use std::iter::once;
@@ -93,6 +93,8 @@ impl Reconstruct for BinOp {
                 if self.kind == Token::OneByte(0x82)
                     && (ListIndexable::try_from(operand).is_ok()
                         || MatrixIndexable::try_from(operand).is_ok())
+                    || (matches!(operand, Operand::NumericLiteral(_))
+                        && matches!(&*self.right, Expression::Operand(Operand::NumericLiteral(_))))
                 {
                     implicit_mul_viable = false;
                 }

@@ -309,10 +309,10 @@ impl Reconstruct for tifloats::Float {
 
                     result.push(Token::OneByte(0x3B));
                     if exponent > 10 {
-                        result.push(Token::OneByte(0x30 + (exponent as u8 / 10)));
+                        result.push(Token::OneByte(0x30 + (zeros as u8 / 10)));
                     }
 
-                    result.push(Token::OneByte(0x30 + (exponent as u8 % 10)));
+                    result.push(Token::OneByte(0x30 + (zeros as u8 % 10)));
                 } else {
                     if zeros == 1 {
                         result.push(Token::OneByte(0x30));
@@ -425,6 +425,7 @@ mod tests {
         reconstruct_test_case!(three_halves, "/snippets/parsing/numbers/three-halves.txt");
         reconstruct_test_case!(million, "/snippets/parsing/numbers/million.txt");
         reconstruct_test_case!(three_hundred, "/snippets/parsing/numbers/three-hundred.txt");
+        reconstruct_test_case!(earth_mass, "/snippets/parsing/numbers/earth-mass.txt");
         reconstruct_test_case!(
             leading_decimal,
             "/snippets/parsing/numbers/leading-decimal.txt"

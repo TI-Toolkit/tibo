@@ -76,6 +76,8 @@ fn main() {
             let b = a_program.reconstruct(&version);
 
             if a != b {
+                print!("{}", tokenizer.stringify(&a));
+                print!("{}", tokenizer.stringify(&b));
                 panic!("test failed");
             }
 
