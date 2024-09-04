@@ -65,7 +65,6 @@ fn main() {
     };
 
     if let Ok(program) = loaded {
-        print!("Loaded program successfully!");
         if cfg!(feature = "round-trip") {
             let version = titokens::version::LATEST.clone();
 
@@ -76,12 +75,16 @@ fn main() {
             let b = a_program.reconstruct(&version);
 
             if a != b {
-                print!("{}", tokenizer.stringify(&a));
-                print!("{}", tokenizer.stringify(&b));
+                println!("== A ==");
+                println!("{}", tokenizer.stringify(&a));
+                println!("== B ==");
+                println!("{}", tokenizer.stringify(&b));
                 panic!("test failed");
             }
 
-            print!("{}", tokenizer.stringify(&b));
+            println!("{}", tokenizer.stringify(&b));
+        } else {
+            println!("Loaded program successfully!");
         }
     } else {
         loaded.unwrap();
