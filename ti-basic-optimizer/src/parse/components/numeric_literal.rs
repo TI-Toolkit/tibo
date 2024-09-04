@@ -48,6 +48,11 @@ impl<'a> Builder<'a> {
 
                     self.digits = digits;
                 }
+
+                if let Some(Token::OneByte(0x3B)) = self.tokens.peek() {
+                    self.tokens.next();
+                    self.handle_scientific_notation();
+                }
             }
 
             // Scientific E
@@ -397,6 +402,12 @@ mod tests {
             "/snippets/parsing/numbers/three-hundred.txt",
             tifloat!(0x30000000000000 * 10 ^ 2)
         );
+
+        parse_test_case!(
+            earth_mass,
+            "/snippets/parsing/numbers/earth-mass.txt",
+            tifloat!(0x59724000000000 * 10 ^ 24)
+        );
     }
 
     mod reconstruct {
@@ -409,10 +420,13 @@ mod tests {
                     let data = load_test_data($path);
                     let mut tokens = data.clone();
                     let mut builder = Builder::new(&mut tokens);
+                    let a = builder.parse();
+                    let mut reconstructed = Tokens::from_vec(a.reconstruct(&titokens::version::LATEST_MONO), None);
+                    let mut builder2 = Builder::new(&mut reconstructed);
+                    let b = builder2.parse();
 
                     assert_eq!(
-                        builder.parse().reconstruct(&titokens::version::LATEST_MONO),
-                        data.collect::<Vec<_>>()
+                        a, b
                     );
                 }
             };
