@@ -555,9 +555,8 @@ dependencies = [
 
 [[package]]
 name = "tifloats"
-version = "2.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a36bb1200dd23d7fed3657c9fba1ab0a171678f1cc48124cd6c69cdb439255fe"
+version = "2.5.0"
+source = "git+https://github.com/TI-Toolkit/tifloats_lib_rs.git#e3d8d53d70c1ccc5d7b06cb51baca98cf81a8af6"
 dependencies = [
  "bitflags",
 ]

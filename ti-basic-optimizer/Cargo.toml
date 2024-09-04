@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
 titokens = { path = "../tokens", features = ["itertools", "deku-8xp"] }
-tifloats = "2.3.4"
+tifloats = { git = "https://github.com/TI-Toolkit/tifloats_lib_rs.git" }
 itertools = "0.13.0"
 ariadne = "0.4.1"
 deku = "0.17.0"
