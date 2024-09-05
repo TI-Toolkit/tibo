@@ -2,8 +2,8 @@ use tifloats::{tifloat, Float};
 
 use crate::error_reporting::LineReport;
 use crate::parse::components::{string::TIString, Operand};
-use crate::parse::{Parse, Reconstruct};
-use titokens::{Token, Tokens, Version};
+use crate::parse::Parse;
+use titokens::{Token, Tokens};
 
 pub struct Builder<'a> {
     tokens: &'a mut Tokens,
@@ -236,97 +236,6 @@ pub(crate) fn parse_constant(tok: Token, more: &mut Tokens) -> Option<Operand> {
             )])))
         }
         _ => None,
-    }
-}
-
-impl Reconstruct for tifloats::Float {
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
-        let sig_figs = self.significant_figures();
-
-        // If they're available, using constants is faster than using the numbers themselves because
-        // retrieving an already-parsed number from memory is faster than parsing it again.
-        //
-        // for long decimals like pi and e, this also saves size
-        if *version > *titokens::version::EARLIEST_COLOR {
-            if (tifloat!(0x0010000000000000 * 10 ^ 1)..=tifloat!(0x0024000000000000 * 10 ^ 1))
-                .contains(self)
-            {
-                let lower_byte = (0x41 - 10)
-                    + if sig_figs.len() == 2 {
-                        sig_figs[0] * 10 + sig_figs[1]
-                    } else {
-                        sig_figs[0] * 10
-                    };
-                debug_assert!((0x41..=0x4F).contains(&lower_byte));
-
-                return vec![Token::TwoByte(0xEF, lower_byte)];
-            }
-
-            if tifloat!(0x0031415926535898 * 10 ^ 0) == *self {
-                return vec![Token::OneByte(0xAC)];
-            } else if tifloat!(0x0027182818284590 * 10 ^ 0) == *self {
-                return vec![Token::TwoByte(0xBB, 0x31)];
-            }
-        }
-
-        let mut result = Vec::with_capacity(2 + self.exponent().abs() as usize);
-
-        if self.is_negative() {
-            result.push(Token::OneByte(0xB0))
-        }
-
-        let exponent = self.exponent();
-
-        if exponent < 0 {
-            result.push(Token::OneByte(0x3A));
-            // need |exponent|-1 zeros
-            for i in 0..exponent.abs() - 1 {
-                result.push(Token::OneByte(0x30));
-            }
-        }
-
-        result.extend(
-            sig_figs
-                .iter()
-                .map(|x| Token::OneByte(0x30 + x))
-                .collect::<Vec<_>>(),
-        );
-
-        if exponent >= 0 {
-            // eg. 12 has sigfigs=2, exponent=1, does not need decimal point
-            // eg. 1.5 has sigfigs=2, exponent=0, needs decimal point
-            if sig_figs.len() > 1 + exponent as usize {
-                result.insert(
-                    result.len() + 1 + exponent as usize - sig_figs.len(),
-                    Token::OneByte(0x3A),
-                );
-            } else if exponent as usize >= sig_figs.len() {
-                // need exponent+1-sigfigs zeros
-                // eg. 10=1.0 * 10^1 (has sigfigs=1, exponent=1, zeros=1)
-                let zeros = exponent as usize + 1 - sig_figs.len();
-                // Per my testing, if we need to add two or more zeros, it's faster to use |E
-                // it's also obviously smaller for > 2 zeros
-                if zeros >= 2 {
-                    // |E2 = 1|E2 = 100
-                    if sig_figs == vec![1] {
-                        result.pop(); // remove the 1
-                    }
-
-                    result.push(Token::OneByte(0x3B));
-                    if exponent > 10 {
-                        result.push(Token::OneByte(0x30 + (zeros as u8 / 10)));
-                    }
-
-                    result.push(Token::OneByte(0x30 + (zeros as u8 % 10)));
-                } else {
-                    if zeros == 1 {
-                        result.push(Token::OneByte(0x30));
-                    }
-                }
-            }
-        }
-
-        result
     }
 }
 

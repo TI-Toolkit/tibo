@@ -1,4 +1,5 @@
 mod expressions;
+mod strategies;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Default)]
 pub enum Priority {
