@@ -1,7 +1,8 @@
 use crate::error_reporting::{expect_some, expect_tok, next_or_err, LineReport};
 use crate::parse::{commands::control_flow::LabelName, expression::Expression, Parse, Reconstruct};
+use crate::Config;
 use std::iter::once;
-use titokens::{Token, Tokens, Version};
+use titokens::{Token, Tokens};
 
 #[derive(Clone, Debug)]
 pub struct Menu {
@@ -79,18 +80,18 @@ impl Parse for Menu {
 }
 
 impl Reconstruct for Menu {
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+    fn reconstruct(&self, config: &Config) -> Vec<Token> {
         once(Token::OneByte(0xE6))
-            .chain(self.title.reconstruct(version))
+            .chain(self.title.reconstruct(config))
             .chain(
                 self.option_titles
                     .iter()
                     .zip(self.option_labels.iter())
                     .flat_map(|(title, label)| {
                         once(Token::OneByte(0x2B))
-                            .chain(title.reconstruct(version))
+                            .chain(title.reconstruct(config))
                             .chain(once(Token::OneByte(0x2B)))
-                            .chain(label.reconstruct(version))
+                            .chain(label.reconstruct(config))
                     }),
             )
             .collect()
@@ -125,6 +126,9 @@ mod tests {
             .unwrap()
             .unwrap();
 
-        assert_eq!(menu.reconstruct(&test_version()), data.collect::<Vec<_>>());
+        assert_eq!(
+            menu.reconstruct(&test_version().into()),
+            data.collect::<Vec<_>>()
+        );
     }
 }

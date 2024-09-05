@@ -3,7 +3,8 @@ use itertools::Itertools;
 use crate::error_reporting::LineReport;
 use crate::parse::expression::Expression;
 use crate::parse::{Parse, Reconstruct};
-use titokens::{Token, Tokens, Version};
+use crate::Config;
+use titokens::{Token, Tokens};
 
 #[derive(Clone, Debug)]
 pub struct Generic {
@@ -24,35 +25,35 @@ impl Parse for Generic {
 
         let command_position = more.current_position() - 1;
 
-        if Generic::accepts_parameters(token) {
-            if !matches!(more.peek(), Some(Token::OneByte(0x3E | 0x3F)) | None) {
-                let mut next = more.next().unwrap();
-                while let Some(expr) = Expression::parse(next, more)? {
-                    command.arguments.push(expr);
+        if Generic::accepts_parameters(token)
+            && !matches!(more.peek(), Some(Token::OneByte(0x3E | 0x3F)) | None)
+        {
+            let mut next = more.next().unwrap();
+            while let Some(expr) = Expression::parse(next, more)? {
+                command.arguments.push(expr);
 
-                    match more.peek() {
-                        Some(Token::OneByte(0x2B)) => {
-                            // ,
-                            more.next();
-                        }
-                        Some(Token::OneByte(0x11)) if Generic::has_opening_parenthesis(token) => {
-                            // )
-                            more.next();
-                            break;
-                        }
-                        Some(Token::OneByte(0x3E | 0x3F)) | None => break, // :, \n, EOF
-
-                        Some(_) => Err(LineReport::new(
-                            more.current_position() - 1,
-                            "Unexpected character in command invocation",
-                            Some("perhaps it's unimplemented?"),
-                        )
-                        .with_label(command_position, "This command.")
-                        .with_label(more.current_position() - 1, "here"))?,
+                match more.peek() {
+                    Some(Token::OneByte(0x2B)) => {
+                        // ,
+                        more.next();
                     }
+                    Some(Token::OneByte(0x11)) if Generic::has_opening_parenthesis(token) => {
+                        // )
+                        more.next();
+                        break;
+                    }
+                    Some(Token::OneByte(0x3E | 0x3F)) | None => break, // :, \n, EOF
 
-                    next = more.next().unwrap();
+                    Some(_) => Err(LineReport::new(
+                        more.current_position() - 1,
+                        "Unexpected character in command invocation",
+                        Some("perhaps it's unimplemented?"),
+                    )
+                    .with_label(command_position, "This command.")
+                    .with_label(more.current_position() - 1, "here"))?,
                 }
+
+                next = more.next().unwrap();
             }
         }
 
@@ -61,14 +62,14 @@ impl Parse for Generic {
 }
 
 impl Reconstruct for Generic {
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+    fn reconstruct(&self, config: &Config) -> Vec<Token> {
         use std::iter::once;
 
         once(self.kind)
             .chain(
                 self.arguments
                     .iter()
-                    .map(|x| x.reconstruct(version))
+                    .map(|x| x.reconstruct(config))
                     .intersperse(vec![Token::OneByte(0x2B)])
                     .flatten(),
             )

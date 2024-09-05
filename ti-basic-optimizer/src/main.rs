@@ -30,6 +30,15 @@ pub struct Args {
         help = "Provide a tokenized 8xp to optimize. Mutually exclusive with --txt."
     )]
     path_to_8xp_file: Option<PathBuf>,
+
+    #[arg(long = "size", group = "priority", help = "Prioritize file size.")]
+    size: bool,
+    #[arg(
+        long = "speed",
+        group = "priority",
+        help = "Prioritize execution speed."
+    )]
+    speed: bool,
 }
 
 fn parse_8xp(path_buf: PathBuf) -> Result<parse::Program, LoadError> {
@@ -64,15 +73,29 @@ fn main() {
         parse_txt(path_buf)
     };
 
+    let priority = if settings.speed {
+        Priority::Speed
+    } else if settings.size {
+        Priority::Size
+    } else {
+        Priority::Neutral
+    };
+
     if let Ok(program) = loaded {
         if cfg!(feature = "round-trip") {
             let version = titokens::version::LATEST.clone();
+            let config = Config {
+                mrov: version.clone(),
+                priority,
+            };
 
             let tokenizer = Tokenizer::new(version.clone(), "en");
-            let a = program.reconstruct(&version);
-            let a_program =
-                Program::from_tokens(&mut Tokens::from_vec(a.clone(), Some(version.clone())), &tokenizer);
-            let b = a_program.reconstruct(&version);
+            let a = program.reconstruct(&config);
+            let a_program = Program::from_tokens(
+                &mut Tokens::from_vec(a.clone(), Some(version.clone())),
+                &tokenizer,
+            );
+            let b = a_program.reconstruct(&config);
 
             if a != b {
                 println!("== A ==");

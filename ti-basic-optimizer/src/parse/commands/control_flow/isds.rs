@@ -1,8 +1,8 @@
 use crate::error_reporting::{expect_some, expect_tok, next_or_err, LineReport};
-use crate::parse::components::NumericVarName;
-use crate::parse::expression::Expression;
-use crate::parse::{Parse, Reconstruct};
-use titokens::{Token, Tokens, Version};
+use crate::parse::{components::NumericVarName, expression::Expression, Parse, Reconstruct};
+
+use crate::Config;
+use titokens::{Token, Tokens};
 
 // IsDs the real life?
 #[derive(Clone, Debug)]
@@ -37,10 +37,10 @@ impl Parse for IsDs {
 }
 
 impl Reconstruct for IsDs {
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
-        let mut result = self.variable.reconstruct(version);
+    fn reconstruct(&self, config: &Config) -> Vec<Token> {
+        let mut result = self.variable.reconstruct(config);
         result.push(Token::OneByte(0x2B));
-        result.extend(self.condition.reconstruct(version));
+        result.extend(self.condition.reconstruct(config));
 
         result
     }

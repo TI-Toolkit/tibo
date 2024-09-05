@@ -8,8 +8,9 @@ use crate::parse::{
     expression::Expression,
     Parse, Reconstruct,
 };
+use crate::Config;
 use std::iter::once;
-use titokens::{Token, Tokens, Version};
+use titokens::{Token, Tokens};
 
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub struct LabelName(u16);
@@ -34,7 +35,7 @@ impl Parse for LabelName {
 }
 
 impl Reconstruct for LabelName {
-    fn reconstruct(&self, _version: &Version) -> Vec<Token> {
+    fn reconstruct(&self, _config: &Config) -> Vec<Token> {
         let mut data = vec![Token::OneByte((self.0 >> 8) as u8)];
         if self.0 & 0xFF != 0 {
             data.push(Token::OneByte((self.0 & 0xFF) as u8));
@@ -90,7 +91,7 @@ impl Parse for ControlFlow {
 
 impl Reconstruct for ControlFlow {
     #[rustfmt::skip]
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+    fn reconstruct(&self, version: &Config) -> Vec<Token> {
         match self {
             ControlFlow::If(cond) => once(Token::OneByte(0xCE)).chain(cond.reconstruct(version)).collect(),
             ControlFlow::Then => vec![Token::OneByte(0xCF)],

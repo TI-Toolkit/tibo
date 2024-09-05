@@ -1,8 +1,9 @@
 use crate::error_reporting::LineReport;
 use crate::parse::components::{ListName, DEFAULT_LISTS};
 use crate::parse::{Parse, Reconstruct};
-use titokens::{Token, Tokens, Version};
+use titokens::{Token, Tokens};
 
+use crate::Config;
 use itertools::Itertools;
 
 #[derive(Clone, Debug)]
@@ -61,18 +62,16 @@ impl Parse for SetUpEditor {
 }
 
 impl Reconstruct for SetUpEditor {
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+    fn reconstruct(&self, config: &Config) -> Vec<Token> {
         let mut result = vec![Token::TwoByte(0xBB, 0x4A)];
-        if self.lists.len() == 6 {
-            if DEFAULT_LISTS.iter().all(|x| self.lists.contains(x)) {
-                return result;
-            }
+        if self.lists.len() == 6 && DEFAULT_LISTS.iter().all(|x| self.lists.contains(x)) {
+            return result;
         }
 
         result.extend(
             self.lists
                 .iter()
-                .map(|name| name.reconstruct_custom_name(version))
+                .map(|name| name.reconstruct_custom_name(config))
                 .intersperse(vec![Token::OneByte(0x2B)])
                 .flatten(),
         );
@@ -95,7 +94,7 @@ mod tests {
             SetUpEditor::parse(token, &mut tokens)
                 .unwrap()
                 .unwrap()
-                .reconstruct(&*version::LATEST),
+                .reconstruct(&version::LATEST.clone().into()),
             vec![token]
         );
     }

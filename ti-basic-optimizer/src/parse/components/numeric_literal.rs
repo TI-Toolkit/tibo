@@ -421,13 +421,14 @@ mod tests {
                     let mut tokens = data.clone();
                     let mut builder = Builder::new(&mut tokens);
                     let a = builder.parse();
-                    let mut reconstructed = Tokens::from_vec(a.reconstruct(&titokens::version::LATEST_MONO), None);
+                    let mut reconstructed = Tokens::from_vec(
+                        a.reconstruct(&(titokens::version::LATEST_MONO.clone().into())),
+                        None,
+                    );
                     let mut builder2 = Builder::new(&mut reconstructed);
                     let b = builder2.parse();
 
-                    assert_eq!(
-                        a, b
-                    );
+                    assert_eq!(a, b);
                 }
             };
         }

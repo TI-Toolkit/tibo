@@ -1,7 +1,8 @@
 use crate::error_reporting::LineReport;
 use crate::parse::{Parse, Reconstruct};
+use crate::Config;
 use std::iter::once;
-use titokens::{Token, Tokens, Version};
+use titokens::{Token, Tokens};
 
 #[derive(Clone, Debug)]
 pub struct ProgramName {
@@ -18,7 +19,8 @@ impl Parse for ProgramName {
         let mut name = vec![];
 
         while let Some(token) = more.next() {
-            if (name.len() == 0 && token.is_alpha()) || (name.len() > 0 && token.is_alphanumeric())
+            if (!name.is_empty() && token.is_alpha())
+                || (name.is_empty() && token.is_alphanumeric())
             {
                 if name.len() > 8 {
                     Err(LineReport::new(
@@ -40,7 +42,7 @@ impl Parse for ProgramName {
             }
         }
 
-        if name.len() == 0 {
+        if name.is_empty() {
             Err(LineReport::new(
                 start_position,
                 "Expected a program name.",
@@ -53,7 +55,7 @@ impl Parse for ProgramName {
 }
 
 impl Reconstruct for ProgramName {
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+    fn reconstruct(&self, _config: &Config) -> Vec<Token> {
         once(Token::OneByte(0x5F))
             .chain(self.name.clone())
             .collect()

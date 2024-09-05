@@ -3,10 +3,11 @@ use itertools::Itertools;
 use crate::error_reporting::LineReport;
 use crate::parse::commands::Command;
 use crate::parse::{Parse, Reconstruct};
-use titokens::{tokenizer, Token, Tokenizer, Tokens, Version};
+use crate::Config;
+use titokens::{Token, Tokenizer, Tokens, Version};
 
 pub struct Program {
-    lines: Vec<Command>,
+    pub lines: Vec<Command>,
 }
 
 impl Program {
@@ -84,12 +85,12 @@ impl Program {
         Ok(Program { lines })
     }
 
-    pub fn reconstruct(&self, version: &Version) -> Vec<Token> {
+    pub fn reconstruct(&self, config: &Config) -> Vec<Token> {
         // We choose to exclusively output 0x3F as a newline character because it means we never have
         // to worry about closing strings.
         self.lines
             .iter()
-            .map(|line| line.reconstruct(version))
+            .map(|line| line.reconstruct(config))
             .intersperse(vec![Token::OneByte(0x3F)])
             .flatten()
             .collect()
@@ -132,12 +133,12 @@ mod tests {
                     let mut original = load_test_data($path);
                     let tokenizer = Tokenizer::new(test_version(), "en");
                     let original_program = Program::from_tokens(&mut original, &tokenizer);
-                    let a = original_program.reconstruct(&test_version());
+                    let a = original_program.reconstruct(&test_version().into());
                     let a_program = Program::from_tokens(
                         &mut Tokens::from_vec(a.clone(), Some(test_version())),
                         &tokenizer,
                     );
-                    let b = a_program.reconstruct(&test_version());
+                    let b = a_program.reconstruct(&test_version().into());
 
                     if $debug {
                         dbg!(
@@ -158,6 +159,6 @@ mod tests {
         }
 
         round_trip!(bouncy_ball, "/programs/bouncy_ball/raw.txt");
-        round_trip!(stick_hero, "/programs/stick_hero/raw.txt", true);
+        round_trip!(stick_hero, "/programs/stick_hero/raw.txt");
     }
 }

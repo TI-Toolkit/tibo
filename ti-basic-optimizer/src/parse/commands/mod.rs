@@ -4,17 +4,19 @@ mod generic;
 mod prgm;
 mod setupeditor;
 
-pub use control_flow::ControlFlow;
+pub use control_flow::{ControlFlow, LabelName};
 pub use delvar_chain::DelVarChain;
+pub use prgm::ProgramName;
+pub use setupeditor::SetUpEditor;
+
 pub use generic::Generic;
 use std::iter::once;
 
 use crate::error_reporting::{expect_some, next_or_err, LineReport};
-use crate::parse::commands::prgm::ProgramName;
-use crate::parse::commands::setupeditor::SetUpEditor;
 use crate::parse::components::StoreTarget;
 use crate::parse::{expression::Expression, Parse, Reconstruct};
-use titokens::{Token, Tokens, Version};
+use crate::Config;
+use titokens::{Token, Tokens};
 
 #[derive(Clone, Debug)]
 pub enum Command {
@@ -66,19 +68,19 @@ impl Parse for Command {
 }
 
 impl Reconstruct for Command {
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+    fn reconstruct(&self, config: &Config) -> Vec<Token> {
         match self {
-            Command::ControlFlow(x) => x.reconstruct(version),
-            Command::Generic(x) => x.reconstruct(version),
-            Command::DelVarChain(x) => x.reconstruct(version),
-            Command::SetUpEditor(x) => x.reconstruct(version),
-            Command::Expression(x) => x.reconstruct(version),
-            Command::ProgramInvocation(x) => x.reconstruct(version),
+            Command::ControlFlow(x) => x.reconstruct(config),
+            Command::Generic(x) => x.reconstruct(config),
+            Command::DelVarChain(x) => x.reconstruct(config),
+            Command::SetUpEditor(x) => x.reconstruct(config),
+            Command::Expression(x) => x.reconstruct(config),
+            Command::ProgramInvocation(x) => x.reconstruct(config),
             Command::Store(x, target) => x
-                .reconstruct(version)
+                .reconstruct(config)
                 .into_iter()
                 .chain(once(Token::OneByte(0x04)))
-                .chain(target.reconstruct(version))
+                .chain(target.reconstruct(config))
                 .collect(),
         }
     }

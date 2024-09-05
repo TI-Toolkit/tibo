@@ -1,7 +1,8 @@
 use crate::error_reporting::LineReport;
 use crate::parse::components::NumericVarName;
 use crate::parse::{Parse, Reconstruct};
-use titokens::{Token, Tokens, Version};
+use crate::Config;
+use titokens::{Token, Tokens};
 
 pub const DEFAULT_LISTS: [ListName; 6] = [
     ListName::Default(Token::TwoByte(0x5D, 0x00)),
@@ -76,9 +77,9 @@ impl ListName {
 
     /// Reconstruct the up-to-5-character custom list name, without the beginning |L, or the
     /// original token if this is a default list.
-    pub fn reconstruct_custom_name(&self, version: &Version) -> Vec<Token> {
+    pub fn reconstruct_custom_name(&self, config: &Config) -> Vec<Token> {
         match self {
-            ListName::Default(_) => self.reconstruct(version),
+            ListName::Default(_) => self.reconstruct(config),
             ListName::Custom(name) => name
                 .iter()
                 .filter(|&&x| (x > 0))
@@ -103,7 +104,7 @@ impl Parse for ListName {
 }
 
 impl Reconstruct for ListName {
-    fn reconstruct(&self, _version: &Version) -> Vec<Token> {
+    fn reconstruct(&self, _config: &Config) -> Vec<Token> {
         match self {
             ListName::Default(tok) => vec![*tok],
             ListName::Custom(name) => std::iter::once(Token::OneByte(0xEB))
@@ -138,6 +139,6 @@ mod tests {
         let parsed = ListName::parse(tokens.next().unwrap(), &mut tokens)
             .unwrap()
             .unwrap();
-        assert_eq!(parsed.reconstruct(&test_version()), name);
+        assert_eq!(parsed.reconstruct(&test_version().into()), name);
     }
 }

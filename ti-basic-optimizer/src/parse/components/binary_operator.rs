@@ -1,6 +1,7 @@
 use crate::parse::components::{ListIndexable, MatrixIndexable, Operand, Operator, OperatorKind};
 use crate::parse::expression::Expression;
 use crate::parse::Reconstruct;
+use crate::Config;
 use std::iter::once;
 use titokens::{Token, Version};
 
@@ -77,14 +78,14 @@ impl BinOp {
 }
 
 impl Reconstruct for BinOp {
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+    fn reconstruct(&self, config: &Config) -> Vec<Token> {
         let mut implicit_mul_viable = true;
         let mut result = match &*self.left {
             Expression::Operator(Operator::Binary(left_binop))
                 if left_binop.precedence() < self.precedence() =>
             {
                 once(Token::OneByte(0x10))
-                    .chain(left_binop.reconstruct(version))
+                    .chain(left_binop.reconstruct(config))
                     .chain(once(Token::OneByte(0x11)))
                     .collect()
             }
@@ -94,15 +95,18 @@ impl Reconstruct for BinOp {
                     && (ListIndexable::try_from(operand).is_ok()
                         || MatrixIndexable::try_from(operand).is_ok())
                     || (matches!(operand, Operand::NumericLiteral(_))
-                        && matches!(&*self.right, Expression::Operand(Operand::NumericLiteral(_))))
+                        && matches!(
+                            &*self.right,
+                            Expression::Operand(Operand::NumericLiteral(_))
+                        ))
                 {
                     implicit_mul_viable = false;
                 }
 
-                operand.reconstruct(version)
+                operand.reconstruct(config)
             }
 
-            expr => expr.reconstruct(version),
+            expr => expr.reconstruct(config),
         };
 
         if self.kind != Token::OneByte(0x82) || !implicit_mul_viable {
@@ -114,11 +118,11 @@ impl Reconstruct for BinOp {
                 if left_binop.precedence() <= self.precedence() =>
             {
                 result.push(Token::OneByte(0x10));
-                result.extend(left_binop.reconstruct(version));
+                result.extend(left_binop.reconstruct(config));
                 result.push(Token::OneByte(0x11));
             }
 
-            expr => result.extend(expr.reconstruct(version)),
+            expr => result.extend(expr.reconstruct(config)),
         }
 
         result

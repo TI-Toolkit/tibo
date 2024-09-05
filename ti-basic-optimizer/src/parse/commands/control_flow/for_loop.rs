@@ -1,8 +1,9 @@
 use crate::error_reporting::{expect_some, expect_tok, next_or_err, LineReport};
 use crate::parse::expression::Expression;
 use crate::parse::{Parse, Reconstruct};
+use crate::Config;
 use std::iter::once;
-use titokens::{Token, Tokens, Version};
+use titokens::{Token, Tokens};
 
 #[derive(Clone, Debug)]
 pub struct ForLoop {
@@ -74,16 +75,16 @@ impl Parse for ForLoop {
 }
 
 impl Reconstruct for ForLoop {
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+    fn reconstruct(&self, config: &Config) -> Vec<Token> {
         once(Token::OneByte(0xD3))
-            .chain(self.iterator.reconstruct(version))
+            .chain(self.iterator.reconstruct(config))
             .chain(once(Token::OneByte(0x2B)))
-            .chain(self.start.reconstruct(version))
+            .chain(self.start.reconstruct(config))
             .chain(once(Token::OneByte(0x2B)))
-            .chain(self.start.reconstruct(version))
+            .chain(self.start.reconstruct(config))
             .chain(if let Some(step) = &self.step {
                 once(Token::OneByte(0x2B))
-                    .chain(step.reconstruct(version))
+                    .chain(step.reconstruct(config))
                     .collect::<Vec<_>>()
             } else {
                 vec![]

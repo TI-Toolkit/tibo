@@ -1,7 +1,8 @@
 use crate::error_reporting::{next_or_err, LineReport};
 use crate::parse::{commands::Command, components::DelVarTarget, Parse, Reconstruct};
+use crate::Config;
 use std::iter::once;
-use titokens::{Token, Tokens, Version};
+use titokens::{Token, Tokens};
 
 #[derive(Clone, Debug)]
 pub struct DelVarChain {
@@ -41,12 +42,12 @@ impl Parse for DelVarChain {
 }
 
 impl Reconstruct for DelVarChain {
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+    fn reconstruct(&self, config: &Config) -> Vec<Token> {
         self.deletions
             .iter()
-            .flat_map(|target| once(Token::TwoByte(0xBB, 0x54)).chain(target.reconstruct(version)))
+            .flat_map(|target| once(Token::TwoByte(0xBB, 0x54)).chain(target.reconstruct(config)))
             .chain(if let Some(val_expr) = &self.valence {
-                val_expr.reconstruct(version)
+                val_expr.reconstruct(config)
             } else {
                 vec![]
             })

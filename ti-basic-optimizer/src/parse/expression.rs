@@ -1,7 +1,8 @@
 use crate::error_reporting::LineReport;
 use crate::parse::components::*;
 use crate::parse::{Parse, Reconstruct};
-use titokens::{Token, Tokens, Version};
+use crate::Config;
+use titokens::{Token, Tokens};
 
 #[derive(Debug, Clone)]
 pub enum Expression {
@@ -64,6 +65,7 @@ impl<'a> Builder<'a> {
         .with_code(code)
     }
 
+    #[allow(clippy::let_and_return)]
     fn process_next(&mut self, next: Token) -> Result<bool, LineReport> {
         let result = if !self.process_operand_stack(next)? {
             match next {
@@ -278,10 +280,10 @@ impl Parse for Expression {
 }
 
 impl Reconstruct for Expression {
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+    fn reconstruct(&self, config: &Config) -> Vec<Token> {
         match self {
-            Expression::Operator(operator) => operator.reconstruct(version),
-            Expression::Operand(operand) => operand.reconstruct(version),
+            Expression::Operator(operator) => operator.reconstruct(config),
+            Expression::Operand(operand) => operand.reconstruct(config),
         }
     }
 }
@@ -303,12 +305,15 @@ mod tests {
                 let parsed = builder.build().unwrap().unwrap();
 
                 // dbg!(Tokenizer::new($version.clone(), "en").stringify(&parsed.reconstruct($version)));
-                assert_eq!(parsed.reconstruct($version), data.collect::<Vec<_>>());
+                assert_eq!(
+                    parsed.reconstruct(&$version.into()),
+                    data.collect::<Vec<_>>()
+                );
             }
         };
 
         ($name: ident, $path: expr) => {
-            test_case!($name, $path, &test_files::test_version());
+            test_case!($name, $path, test_files::test_version());
         };
     }
 
@@ -317,7 +322,7 @@ mod tests {
     test_case!(
         manual_sum,
         "/snippets/parsing/formulas/manual-sum.txt",
-        &*version::LATEST_MONO
+        version::LATEST_MONO.clone()
     );
 
     #[test]

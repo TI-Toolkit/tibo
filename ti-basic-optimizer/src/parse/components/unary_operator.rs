@@ -1,7 +1,8 @@
 use crate::parse::components::{BinOp, Operator, OperatorKind};
 use crate::parse::expression::Expression;
 use crate::parse::Reconstruct;
-use titokens::{Token, Version};
+use crate::Config;
+use titokens::Token;
 
 #[derive(Clone, Debug)]
 pub struct UnOp {
@@ -22,9 +23,7 @@ impl OperatorKind for UnOp {
 }
 
 impl Reconstruct for UnOp {
-    /// Parenthesis around a UnOp `child` are required in the following cases:
-    ///
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+    fn reconstruct(&self, config: &Config) -> Vec<Token> {
         let mut result = vec![];
 
         // ~
@@ -33,10 +32,10 @@ impl Reconstruct for UnOp {
             match *self.child {
                 Expression::Operator(Operator::Binary(BinOp { kind, .. })) if !matches!(kind, Token::OneByte(0x82 | 0x83)) /* mul, div */ => {
                     result.push(Token::OneByte(0x10)); // (
-                    result.extend(self.child.reconstruct(version));
+                    result.extend(self.child.reconstruct(config));
                     result.push(Token::OneByte(0x10)); // )
                 },
-                _ => result.extend(self.child.reconstruct(version)),
+                _ => result.extend(self.child.reconstruct(config)),
             }
         } else {
             match *self.child {
@@ -48,10 +47,10 @@ impl Reconstruct for UnOp {
                     }),
                 ) => {
                     result.push(Token::OneByte(0x10)); // (
-                    result.extend(self.child.reconstruct(version));
+                    result.extend(self.child.reconstruct(config));
                     result.push(Token::OneByte(0x11)); // )
                 }
-                _ => result.extend(self.child.reconstruct(version)),
+                _ => result.extend(self.child.reconstruct(config)),
             }
 
             result.push(self.kind);

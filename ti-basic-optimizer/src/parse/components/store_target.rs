@@ -6,6 +6,7 @@ use crate::parse::{
     },
     Parse, Reconstruct,
 };
+use crate::Config;
 use std::iter::once;
 use titokens::{Token, Tokens, Version};
 
@@ -90,23 +91,23 @@ impl Parse for StoreTarget {
 }
 
 impl Reconstruct for StoreTarget {
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+    fn reconstruct(&self, config: &Config) -> Vec<Token> {
         match self {
-            Self::NumericVarOrListName(x) => x.reconstruct(version),
-            Self::NumericVar(x) => x.reconstruct(version),
-            Self::List(x) => x.reconstruct_custom_name(version),
-            Self::Matrix(x) => x.reconstruct(version),
-            Self::ListIndex(x) => x.reconstruct(version),
-            Self::MatrixIndex(x) => x.reconstruct(version),
-            Self::String(x) => x.reconstruct(version),
-            Self::WindowVar(x) => x.reconstruct(version),
+            Self::NumericVarOrListName(x) => x.reconstruct(config),
+            Self::NumericVar(x) => x.reconstruct(config),
+            Self::List(x) => x.reconstruct_custom_name(config),
+            Self::Matrix(x) => x.reconstruct(config),
+            Self::ListIndex(x) => x.reconstruct(config),
+            Self::MatrixIndex(x) => x.reconstruct(config),
+            Self::String(x) => x.reconstruct(config),
+            Self::WindowVar(x) => x.reconstruct(config),
             Self::ListResizing(list) => once(Token::OneByte(0xB5))
-                .chain(list.reconstruct(version))
+                .chain(list.reconstruct(config))
                 .collect(),
             Self::MatrixResizing(matrix) => once(Token::OneByte(0xB5))
-                .chain(matrix.reconstruct(version))
+                .chain(matrix.reconstruct(config))
                 .collect(),
-            Self::Equation(x) => x.reconstruct(version),
+            Self::Equation(x) => x.reconstruct(config),
             Self::RandSeed => vec![Token::OneByte(0xAB)],
         }
     }

@@ -4,7 +4,8 @@ use crate::parse::{
     expression::Expression,
     Parse, Reconstruct,
 };
-use titokens::{Token, Tokens, Version};
+use crate::Config;
+use titokens::{Token, Tokens};
 
 #[derive(Debug, Clone)]
 pub enum ListIndexable {
@@ -32,9 +33,9 @@ impl TryFrom<&Operand> for ListIndexable {
 }
 
 impl Reconstruct for ListIndexable {
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+    fn reconstruct(&self, config: &Config) -> Vec<Token> {
         match self {
-            Self::List(name) => name.reconstruct(version),
+            Self::List(name) => name.reconstruct(config),
             Self::TblInput => vec![Token::TwoByte(0x63, 0x2A)],
             Self::Ans => vec![Token::OneByte(0x72)],
         }
@@ -54,9 +55,9 @@ impl From<MatrixName> for MatrixIndexable {
 }
 
 impl Reconstruct for MatrixIndexable {
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+    fn reconstruct(&self, config: &Config) -> Vec<Token> {
         match self {
-            Self::Matrix(name) => name.reconstruct(version),
+            Self::Matrix(name) => name.reconstruct(config),
             Self::Ans => vec![Token::OneByte(0x72)],
         }
     }
@@ -122,12 +123,12 @@ impl MatrixIndex {
 }
 
 impl Reconstruct for MatrixIndex {
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
-        let mut data = self.subject.reconstruct(version);
+    fn reconstruct(&self, config: &Config) -> Vec<Token> {
+        let mut data = self.subject.reconstruct(config);
         data.push(Token::OneByte(0x10));
-        data.extend(self.row.reconstruct(version));
+        data.extend(self.row.reconstruct(config));
         data.push(Token::OneByte(0x2B));
-        data.extend(self.col.reconstruct(version));
+        data.extend(self.col.reconstruct(config));
         data.push(Token::OneByte(0x11));
 
         data
@@ -169,10 +170,10 @@ impl ListIndex {
 }
 
 impl Reconstruct for ListIndex {
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
-        let mut data = self.subject.reconstruct(version);
+    fn reconstruct(&self, config: &Config) -> Vec<Token> {
+        let mut data = self.subject.reconstruct(config);
         data.push(Token::OneByte(0x10));
-        data.extend(self.index.reconstruct(version));
+        data.extend(self.index.reconstruct(config));
         data.push(Token::OneByte(0x11));
 
         data

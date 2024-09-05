@@ -6,7 +6,8 @@ use crate::parse::{
     },
     Parse, Reconstruct,
 };
-use titokens::{Token, Tokens, Version};
+use crate::Config;
+use titokens::{Token, Tokens};
 
 #[derive(Clone, Debug)]
 pub enum DelVarTarget {
@@ -62,17 +63,17 @@ impl Parse for DelVarTarget {
 }
 
 impl Reconstruct for DelVarTarget {
-    fn reconstruct(&self, version: &Version) -> Vec<Token> {
+    fn reconstruct(&self, config: &Config) -> Vec<Token> {
         match self {
-            DelVarTarget::NumericVar(x) => x.reconstruct(version),
-            DelVarTarget::List(x) => x.reconstruct(version),
-            DelVarTarget::Matrix(x) => x.reconstruct(version),
-            DelVarTarget::ListAccess(x) => x.reconstruct(version),
-            DelVarTarget::MatrixAccess(x) => x.reconstruct(version),
-            DelVarTarget::String(x) => x.reconstruct(version),
-            DelVarTarget::Pic(x) => x.reconstruct(version),
-            DelVarTarget::Image(x) => x.reconstruct(version),
-            DelVarTarget::Equation(x) => x.reconstruct(version),
+            DelVarTarget::NumericVar(x) => x.reconstruct(config),
+            DelVarTarget::List(x) => x.reconstruct(config),
+            DelVarTarget::Matrix(x) => x.reconstruct(config),
+            DelVarTarget::ListAccess(x) => x.reconstruct(config),
+            DelVarTarget::MatrixAccess(x) => x.reconstruct(config),
+            DelVarTarget::String(x) => x.reconstruct(config),
+            DelVarTarget::Pic(x) => x.reconstruct(config),
+            DelVarTarget::Image(x) => x.reconstruct(config),
+            DelVarTarget::Equation(x) => x.reconstruct(config),
         }
     }
 }
