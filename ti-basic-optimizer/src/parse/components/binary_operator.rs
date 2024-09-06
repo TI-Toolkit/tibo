@@ -59,6 +59,10 @@ impl BinOp {
         }
     }
 
+    pub fn associative(&self) -> bool {
+        matches!(self.kind, Token::OneByte(0x70 | 0x82 | 0x3C | 0x3D | 0x40))
+    }
+
     pub fn recognize_precedence(token: Token) -> Option<u8> {
         match token {
             Token::OneByte(0x3C | 0x3D) => Some(10), // or xor
@@ -114,11 +118,12 @@ impl Reconstruct for BinOp {
         }
 
         match &*self.right {
-            Expression::Operator(Operator::Binary(left_binop))
-                if left_binop.precedence() <= self.precedence() =>
+            Expression::Operator(Operator::Binary(right_binop))
+                if right_binop.precedence() <= self.precedence()
+                    && !(self.kind == right_binop.kind && self.associative()) =>
             {
                 result.push(Token::OneByte(0x10));
-                result.extend(left_binop.reconstruct(config));
+                result.extend(right_binop.reconstruct(config));
                 result.push(Token::OneByte(0x11));
             }
 
