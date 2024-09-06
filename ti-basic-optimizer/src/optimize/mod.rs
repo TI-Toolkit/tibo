@@ -1,3 +1,6 @@
+use crate::Config;
+use crate::parse::Program;
+
 mod expressions;
 mod strategies;
 
@@ -10,4 +13,12 @@ pub enum Priority {
     Speed,
     /// Disables optimizations which would increase the program's size.
     Size,
+}
+
+impl Program {
+    pub fn optimize(&mut self, config: &Config) {
+        for command in self.lines.iter_mut() {
+            command.optimize_parentheses();
+        }
+    }
 }

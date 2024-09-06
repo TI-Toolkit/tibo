@@ -69,20 +69,27 @@ impl Parse for Command {
 
 impl Reconstruct for Command {
     fn reconstruct(&self, config: &Config) -> Vec<Token> {
-        match self {
+        let mut line = match self {
             Command::ControlFlow(x) => x.reconstruct(config),
             Command::Generic(x) => x.reconstruct(config),
             Command::DelVarChain(x) => x.reconstruct(config),
             Command::SetUpEditor(x) => x.reconstruct(config),
             Command::Expression(x) => x.reconstruct(config),
             Command::ProgramInvocation(x) => x.reconstruct(config),
-            Command::Store(x, target) => x
-                .reconstruct(config)
-                .into_iter()
-                .chain(once(Token::OneByte(0x04)))
-                .chain(target.reconstruct(config))
-                .collect(),
-        }
+            Command::Store(x, target) => {
+                let mut expr = x
+                    .reconstruct(config);
+                Expression::strip_closing_parenthesis(&mut expr);
+                expr.into_iter()
+                    .chain(once(Token::OneByte(0x04)))
+                    .chain(target.reconstruct(config))
+                    .collect()
+            },
+        };
+
+        Expression::strip_closing_parenthesis(&mut line);
+
+        line
     }
 }
 

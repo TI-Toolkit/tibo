@@ -81,15 +81,16 @@ fn main() {
         Priority::Neutral
     };
 
-    if let Ok(program) = loaded {
-        if cfg!(feature = "round-trip") {
-            let version = titokens::version::LATEST.clone();
+    let version = titokens::version::LATEST.clone();
             let config = Config {
                 mrov: version.clone(),
                 priority,
-            };
+        };
+                let tokenizer = Tokenizer::new(version.clone(), "en");
 
-            let tokenizer = Tokenizer::new(version.clone(), "en");
+    if let Ok(mut program) = loaded {
+        if cfg!(feature = "round-trip") {
+
             let a = program.reconstruct(&config);
             let a_program = Program::from_tokens(
                 &mut Tokens::from_vec(a.clone(), Some(version.clone())),
@@ -108,6 +109,10 @@ fn main() {
             println!("{}", tokenizer.stringify(&b));
         } else {
             println!("Loaded program successfully!");
+            program.optimize(&config);
+
+            let tokens = program.reconstruct(&config);
+            println!("{}", tokenizer.stringify(&tokens));
         }
     } else {
         loaded.unwrap();
