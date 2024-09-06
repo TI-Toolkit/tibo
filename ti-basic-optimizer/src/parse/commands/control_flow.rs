@@ -2,18 +2,68 @@ mod for_loop;
 mod isds;
 mod menu;
 
+pub use {for_loop::ForLoop, isds::IsDs, menu::Menu};
+
 use crate::error_reporting::{expect_some, next_or_err, LineReport};
-use crate::parse::{
-    commands::control_flow::{for_loop::ForLoop, isds::IsDs, menu::Menu},
-    expression::Expression,
-    Parse, Reconstruct,
-};
+use crate::parse::{expression::Expression, Parse, Reconstruct};
 use crate::Config;
 use std::iter::once;
 use titokens::{Token, Tokens};
 
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub struct LabelName(u16);
+#[macro_export]
+/// Call with one or two char literals for the letters of the label, or "theta" for theta.
+///
+/// Example:
+/// ```
+/// use ti_basic_optimizer::label_name;
+/// let lbl_12 = label_name!('1' '2');
+/// let lbl_thetatheta = label_name!("theta" "theta");
+macro_rules! label_name {
+    ($first: tt $second: tt) => {
+        $crate::parse::commands::LabelName::new(label_name!(<internal> $first), Some(label_name!(<internal> $second)))
+    };
+
+    ($first: tt) => {
+        $crate::parse::commands::LabelName::new(label_name!(<internal> $first), None)
+    };
+
+    (<internal> "theta") => { 0x5B };
+    (<internal> $x: literal) => {$x as u8};
+}
+
+impl LabelName {
+    /// Construct a label with the given name.
+    ///
+    /// Example:
+    /// ```
+    /// # use ti_basic_optimizer::parse::commands::LabelName;
+    /// // corresponds to the label defined by `Lbl PL`
+    /// let lbl_pl = LabelName::new('P' as u8, Some('L' as u8));
+    /// // corresponds to the label defined by `Lbl theta`
+    /// let lbl_theta = LabelName::new(1 + 'Z' as u8, None);
+    /// assert_ne!(lbl_theta, lbl_pl);
+    /// ```
+    ///
+    /// Consider using the [`label_name`] macro:
+    /// ```
+    /// use ti_basic_optimizer::label_name;
+    /// # use ti_basic_optimizer::parse::commands::LabelName;
+    /// # let lbl_pl = LabelName::new('P' as u8, Some('L' as u8));
+    /// # let lbl_theta = LabelName::new(1 + 'Z' as u8, None);
+    /// assert_eq!(lbl_pl, label_name!('P' 'L'));
+    /// assert_eq!(lbl_theta, label_name!("theta"));
+    /// ```
+    pub fn new(first: u8, second: Option<u8>) -> Self {
+        assert!(matches!(first, 0x41..=0x5B | 0x30..=0x39));
+        if let Some(second) = second {
+            assert!(matches!(second, 0x41..=0x5B | 0x30..=0x39))
+        }
+
+        LabelName((first as u16) << 8 | second.unwrap_or(0) as u16)
+    }
+}
 
 impl Parse for LabelName {
     fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {

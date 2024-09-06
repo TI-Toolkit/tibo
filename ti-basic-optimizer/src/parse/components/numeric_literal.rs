@@ -321,6 +321,7 @@ mod tests {
 
     mod reconstruct {
         use super::*;
+        use crate::parse::Reconstruct;
         macro_rules! reconstruct_test_case {
             ($name:ident, $path:expr) => {
                 #[test]

@@ -1,4 +1,4 @@
-mod control_flow;
+pub mod control_flow;
 mod delvar_chain;
 mod generic;
 mod prgm;
