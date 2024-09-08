@@ -10,3 +10,10 @@ End
 Ans+1
 If Ans=1:Goto A
 If Ans=2:Goto B
+
+
+If Ans
+Then
+DelVar AElse
+Disp "UNREACHABLE
+End
