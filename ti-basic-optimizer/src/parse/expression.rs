@@ -313,7 +313,7 @@ mod tests {
         };
 
         ($name: ident, $path: expr) => {
-            test_case!($name, $path, test_files::test_version());
+            test_case!($name, $path, test_files::test_version!());
         };
     }
 

@@ -104,7 +104,7 @@ enum LabelKind {
 }
 
 impl LabelKind {
-    pub fn string_indices(&self, token_boundaries: &TokenBoundaries) -> Range<usize> {
+    fn string_indices(&self, token_boundaries: &TokenBoundaries) -> Range<usize> {
         match self {
             LabelKind::Single(tok_idx) => token_boundaries.single(*tok_idx),
             LabelKind::Span(tok_range) => token_boundaries.range(tok_range.clone()),
@@ -112,6 +112,9 @@ impl LabelKind {
     }
 }
 
+/// `TokenReport` is used to report errors at the token level.
+///
+/// Token indices are usually obtained by calling [`Tokens::current_position`](titokens::Tokens::current_position).
 #[derive(Debug, Clone)]
 pub struct TokenReport {
     location: usize,
@@ -123,6 +126,9 @@ pub struct TokenReport {
 }
 
 impl TokenReport {
+    /// New error at the provided token index.
+    ///
+    /// Token indices are usually obtained by calling [`Tokens::current_position`](titokens::Tokens::current_position).
     #[must_use]
     pub fn new(location: usize, message: &str, suggestion: Option<&str>) -> Self {
         TokenReport {
@@ -135,14 +141,20 @@ impl TokenReport {
         }
     }
 
+    /// Add a label at the provided range of token indices.
+    ///
+    /// Token indices are usually obtained by calling [`Tokens::current_position`](titokens::Tokens::current_position).
     #[must_use]
-    pub fn with_span_label(mut self, location: std::ops::Range<usize>, message: &str) -> Self {
+    pub fn with_span_label(mut self, location: Range<usize>, message: &str) -> Self {
         self.labels
             .push((LabelKind::Span(location), message.to_string()));
 
         self
     }
 
+    /// Add a label at the provided token index.
+    ///
+    /// Token indices are usually obtained by calling [`Tokens::current_position`](titokens::Tokens::current_position).
     #[must_use]
     pub fn with_label(mut self, location: usize, message: &str) -> Self {
         self.labels
@@ -151,6 +163,7 @@ impl TokenReport {
         self
     }
 
+    /// Provide an error code for this error.
     #[must_use]
     pub fn with_code(mut self, error_code: usize) -> Self {
         self.code = Some(error_code);
@@ -158,6 +171,10 @@ impl TokenReport {
         self
     }
 
+    /// Format and print this error to stderr, using the provided [`TokenBoundaries`] to translate
+    /// the tokens.
+    ///
+    /// [`ariadne`] seems to choke on Unicode input; tokenize without Unicode.
     pub fn error(self, boundaries: TokenBoundaries) {
         let mut builder = ariadne::Report::build(
             ariadne::ReportKind::Error,

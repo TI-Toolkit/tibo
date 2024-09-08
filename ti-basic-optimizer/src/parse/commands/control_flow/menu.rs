@@ -127,7 +127,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(
-            menu.reconstruct(&test_version().into()),
+            menu.reconstruct(&test_version!().into()),
             data.collect::<Vec<_>>()
         );
     }

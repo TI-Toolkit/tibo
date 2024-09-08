@@ -221,7 +221,7 @@ mod tests {
             let savings = expr.optimize_parentheses();
             assert_eq!(expected_savings, savings);
 
-            let reconstructed = expr.reconstruct(&test_version().into());
+            let reconstructed = expr.reconstruct(&test_version!().into());
             let mut optimized = reconstructed.clone();
             Expression::strip_closing_parenthesis(&mut optimized);
 

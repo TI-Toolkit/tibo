@@ -158,7 +158,6 @@ impl Reconstruct for WriteDigits {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test_files::test_version;
     use tifloats::tifloat;
 
     #[test]

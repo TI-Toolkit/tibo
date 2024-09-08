@@ -51,12 +51,11 @@ impl Program {
 mod tests {
     use super::*;
     use crate::label_name;
-    use test_files::{load_test_data, test_version};
-    use titokens::Tokenizer;
+    use test_files::{load_test_data, test_tokenizer};
 
     fn program() -> Program {
         let mut tokens = load_test_data("/snippets/analysis/labels.txt");
-        let tokenizer = Tokenizer::new(test_version(), "en");
+        let tokenizer = test_tokenizer!();
 
         Program::from_tokens(&mut tokens, &tokenizer)
     }

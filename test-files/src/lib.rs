@@ -26,15 +26,24 @@ mod tests {
     }
 }
 
-// Ideally this would be a constant, but I don't want to have to make os_version dyn
-pub fn test_version() -> titokens::Version {
-    titokens::Version {
-        model: titokens::Model::TI84PCE,
+pub use titokens::{Version, Tokenizer, Model};
+
+#[macro_export]
+macro_rules! test_version {
+    () => {$crate::Version {
+        model: $crate::Model::TI84PCE,
         os_version: "5.3.0".to_string(),
-    }
+    }};
 }
+
+#[macro_export]
+macro_rules! test_tokenizer {
+    () => {$crate::Tokenizer::new($crate::test_version!(), "en")};
+}
+
+
 pub fn load_test_data(file: &str) -> titokens::Tokens {
-    let tokenizer = titokens::Tokenizer::new(test_version(), "en");
+    let tokenizer = test_tokenizer!();
 
     let (tokens, _boundaries) = tokenizer
         .tokenize(&std::fs::read_to_string(env!("TESTS_PATH").to_owned() + file).unwrap())

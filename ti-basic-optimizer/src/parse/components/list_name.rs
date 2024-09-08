@@ -139,6 +139,6 @@ mod tests {
         let parsed = ListName::parse(tokens.next().unwrap(), &mut tokens)
             .unwrap()
             .unwrap();
-        assert_eq!(parsed.reconstruct(&test_version().into()), name);
+        assert_eq!(parsed.reconstruct(&test_version!().into()), name);
     }
 }

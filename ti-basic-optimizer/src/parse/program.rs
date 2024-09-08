@@ -100,12 +100,12 @@ impl Program {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test_files::{load_test_data, test_version};
+    use test_files::{load_test_data, test_tokenizer};
 
     #[test]
     fn parses_newlines_correctly_with_strings() {
         let mut tokens = load_test_data("/snippets/parsing/strings/newline-stuff.txt");
-        let mut program = Program::from_tokens(&mut tokens, &Tokenizer::new(test_version(), "en"));
+        let mut program = Program::from_tokens(&mut tokens, &test_tokenizer!());
 
         assert_eq!(program.lines.len(), 5);
     }
@@ -113,7 +113,7 @@ mod tests {
     #[test]
     fn skips_blank_lines() {
         let mut tokens = load_test_data("/snippets/parsing/ten-blank-lines.txt");
-        let mut program = Program::from_tokens(&mut tokens, &Tokenizer::new(test_version(), "en"));
+        let mut program = Program::from_tokens(&mut tokens, &test_tokenizer!());
 
         assert_eq!(program.lines.len(), 0);
     }
@@ -125,27 +125,29 @@ mod tests {
     /// 4. Export to file B
     /// 5. Then, check A == B
     mod round_trip {
+        use test_files::test_version;
         use super::*;
         macro_rules! round_trip {
             ($name: ident, $path: expr, $debug: expr) => {
                 #[test]
                 fn $name() {
                     let mut original = load_test_data($path);
-                    let tokenizer = Tokenizer::new(test_version(), "en");
+                    let tokenizer = test_tokenizer!();
+                    let config = test_version!().into();
                     let original_program = Program::from_tokens(&mut original, &tokenizer);
-                    let a = original_program.reconstruct(&test_version().into());
+                    let a = original_program.reconstruct(&config);
                     let a_program = Program::from_tokens(
-                        &mut Tokens::from_vec(a.clone(), Some(test_version())),
+                        &mut Tokens::from_vec(a.clone(), Some(test_version!())),
                         &tokenizer,
                     );
-                    let b = a_program.reconstruct(&test_version().into());
+                    let b = a_program.reconstruct(&config);
 
                     if $debug {
                         dbg!(
-                            Tokens::from_vec(a.clone(), Some(test_version())).to_string(&tokenizer)
+                            Tokens::from_vec(a.clone(), Some(test_version!())).to_string(&tokenizer)
                         );
                         dbg!(
-                            Tokens::from_vec(b.clone(), Some(test_version())).to_string(&tokenizer)
+                            Tokens::from_vec(b.clone(), Some(test_version!())).to_string(&tokenizer)
                         );
                     }
 
