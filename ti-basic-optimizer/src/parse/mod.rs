@@ -7,10 +7,10 @@ mod program;
 
 pub use program::Program;
 
-use crate::{error_reporting::LineReport, Config};
+use crate::{error_reporting::TokenReport, Config};
 
 pub(crate) trait Parse: Sized {
-    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport>;
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, TokenReport>;
 }
 
 pub(crate) trait Reconstruct {

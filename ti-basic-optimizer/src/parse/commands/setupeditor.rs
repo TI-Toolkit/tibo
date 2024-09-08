@@ -1,4 +1,4 @@
-use crate::error_reporting::LineReport;
+use crate::error_reporting::TokenReport;
 use crate::parse::components::{ListName, DEFAULT_LISTS};
 use crate::parse::{Parse, Reconstruct};
 use titokens::{Token, Tokens};
@@ -12,7 +12,7 @@ pub struct SetUpEditor {
 }
 
 impl Parse for SetUpEditor {
-    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, TokenReport> {
         if token != Token::TwoByte(0xBB, 0x4A) {
             return Ok(None);
         }
@@ -29,7 +29,7 @@ impl Parse for SetUpEditor {
                     if let Some(name) = ListName::parse_custom_name(more)? {
                         lists.push(name);
                     } else {
-                        Err(LineReport::new(
+                        Err(TokenReport::new(
                             more.current_position(),
                             "Expected a list name",
                             None,
@@ -44,7 +44,7 @@ impl Parse for SetUpEditor {
                     }
                     Some(Token::OneByte(0x3E | 0x3F)) | None => break, // :, \n, EOF
 
-                    Some(_) => Err(LineReport::new(
+                    Some(_) => Err(TokenReport::new(
                         more.current_position() - 1,
                         "Unexpected character in SetUpEditor",
                         None,

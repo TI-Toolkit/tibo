@@ -1,4 +1,4 @@
-use crate::error_reporting::{expect_some, expect_tok, next_or_err, LineReport};
+use crate::error_reporting::{expect_some, expect_tok, next_or_err, TokenReport};
 use crate::parse::{commands::control_flow::LabelName, expression::Expression, Parse, Reconstruct};
 use crate::Config;
 use std::iter::once;
@@ -12,7 +12,7 @@ pub struct Menu {
 }
 
 impl Parse for Menu {
-    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, TokenReport> {
         if token != Token::OneByte(0xE6) {
             return Ok(None);
         }
@@ -60,7 +60,7 @@ impl Parse for Menu {
 
                 Some(Token::OneByte(0x3E | 0x3F)) | None => break, // :, \n, EOF
 
-                Some(_) => Err(LineReport::new(
+                Some(_) => Err(TokenReport::new(
                     more.current_position() - 1,
                     "Unexpected character in Menu(",
                     Some("perhaps it's unimplemented?"),

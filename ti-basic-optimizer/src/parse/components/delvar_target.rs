@@ -1,4 +1,4 @@
-use crate::error_reporting::LineReport;
+use crate::error_reporting::TokenReport;
 use crate::parse::{
     components::{
         EquationName, ImageName, ListIndex, ListName, MatrixIndex, MatrixName, NumericVarName,
@@ -24,7 +24,7 @@ pub enum DelVarTarget {
 }
 
 impl Parse for DelVarTarget {
-    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, TokenReport> {
         match token {
             Token::OneByte(0x41..=0x5B) | Token::TwoByte(0x62, 0x21) => {
                 Ok(NumericVarName::parse(token, more)?.map(Self::NumericVar))

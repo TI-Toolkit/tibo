@@ -4,7 +4,7 @@ mod menu;
 
 pub use {for_loop::ForLoop, isds::IsDs, menu::Menu};
 
-use crate::error_reporting::{expect_some, next_or_err, LineReport};
+use crate::error_reporting::{expect_some, next_or_err, TokenReport};
 use crate::parse::{expression::Expression, Parse, Reconstruct};
 use crate::Config;
 use std::iter::once;
@@ -66,7 +66,7 @@ impl LabelName {
 }
 
 impl Parse for LabelName {
-    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, TokenReport> {
         if !token.is_alphanumeric() {
             return Ok(None);
         }
@@ -115,7 +115,7 @@ pub enum ControlFlow {
 
 impl Parse for ControlFlow {
     #[rustfmt::skip]
-    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, TokenReport> {
         use ControlFlow as CF;
         use Expression as Expr;
 

@@ -1,4 +1,4 @@
-use crate::error_reporting::LineReport;
+use crate::error_reporting::TokenReport;
 use crate::parse::components::*;
 use crate::parse::{Parse, Reconstruct};
 use crate::Config;
@@ -36,7 +36,7 @@ impl<'a> Builder<'a> {
         }
     }
 
-    pub fn build(mut self) -> Result<Option<Expression>, LineReport> {
+    pub fn build(mut self) -> Result<Option<Expression>, TokenReport> {
         while let Some(next) = self.tokens.next() {
             if !self.process_next(next)? {
                 break;
@@ -48,8 +48,8 @@ impl<'a> Builder<'a> {
         self.finalize()
     }
 
-    fn error(&self, code: usize) -> LineReport {
-        LineReport::new(
+    fn error(&self, code: usize) -> TokenReport {
+        TokenReport::new(
             self.tokens.current_position(),
             "Expression parsing error",
             Some("Please report this if this is unexpected."),
@@ -66,7 +66,7 @@ impl<'a> Builder<'a> {
     }
 
     #[allow(clippy::let_and_return)]
-    fn process_next(&mut self, next: Token) -> Result<bool, LineReport> {
+    fn process_next(&mut self, next: Token) -> Result<bool, TokenReport> {
         let result = if !self.process_operand_stack(next)? {
             match next {
                 Token::OneByte(0x10) => {
@@ -112,7 +112,7 @@ impl<'a> Builder<'a> {
         result
     }
 
-    fn process_operand_stack(&mut self, next: Token) -> Result<bool, LineReport> {
+    fn process_operand_stack(&mut self, next: Token) -> Result<bool, TokenReport> {
         if let Some(operand) = Operand::parse(next, self.tokens)? {
             self.check_implicit_mul()?;
 
@@ -148,7 +148,7 @@ impl<'a> Builder<'a> {
         self.implicit_mul_allowed = true;
     }
 
-    fn open_paren(&mut self) -> Result<(), LineReport> {
+    fn open_paren(&mut self) -> Result<(), TokenReport> {
         self.paren_depth += 1;
         self.check_implicit_mul()?;
         self.operator_stack.push(Token::OneByte(0x10)); // (
@@ -156,7 +156,7 @@ impl<'a> Builder<'a> {
         Ok(())
     }
 
-    fn close_paren(&mut self) -> Result<(), LineReport> {
+    fn close_paren(&mut self) -> Result<(), TokenReport> {
         self.paren_depth -= 1;
 
         while let Some(&token) = self.operator_stack.last() {
@@ -179,7 +179,7 @@ impl<'a> Builder<'a> {
         Ok(())
     }
 
-    fn check_implicit_mul(&mut self) -> Result<(), LineReport> {
+    fn check_implicit_mul(&mut self) -> Result<(), TokenReport> {
         if self.implicit_mul_allowed {
             self.push_binop(Token::OneByte(0x82))?; // *
         }
@@ -187,7 +187,7 @@ impl<'a> Builder<'a> {
         Ok(())
     }
 
-    fn push_binop(&mut self, operator: Token) -> Result<(), LineReport> {
+    fn push_binop(&mut self, operator: Token) -> Result<(), TokenReport> {
         assert!(BinOp::recognize(operator));
 
         let precedence = BinOp::recognize_precedence(operator).unwrap();
@@ -210,7 +210,7 @@ impl<'a> Builder<'a> {
         Ok(())
     }
 
-    fn process_operator(&mut self, operator: Token) -> Result<bool, LineReport> {
+    fn process_operator(&mut self, operator: Token) -> Result<bool, TokenReport> {
         if UnOp::recognize(operator) {
             let child = self.operand_stack.pop().ok_or_else(|| self.error(5))?;
 
@@ -252,7 +252,7 @@ impl<'a> Builder<'a> {
         todo!();
     }
 
-    fn finalize(&mut self) -> Result<Option<Expression>, LineReport> {
+    fn finalize(&mut self) -> Result<Option<Expression>, TokenReport> {
         while let Some(x) = self.operator_stack.pop() {
             if !matches!(x, Token::OneByte(0x10)) {
                 // everything besides (
@@ -271,7 +271,7 @@ impl<'a> Builder<'a> {
 }
 
 impl Parse for Expression {
-    fn parse(_token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+    fn parse(_token: Token, more: &mut Tokens) -> Result<Option<Self>, TokenReport> {
         more.backtrack_once();
         let builder = Builder::new(more);
 

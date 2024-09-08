@@ -1,4 +1,4 @@
-use crate::error_reporting::{expect_some, expect_tok, next_or_err, LineReport};
+use crate::error_reporting::{expect_some, expect_tok, next_or_err, TokenReport};
 use crate::parse::{
     components::{ListName, MatrixName, Operand},
     expression::Expression,
@@ -87,7 +87,7 @@ impl MatrixIndex {
         subject: MatrixIndexable,
         token: Token,
         more: &mut Tokens,
-    ) -> Result<Option<Self>, LineReport> {
+    ) -> Result<Option<Self>, TokenReport> {
         if token != Token::OneByte(0x10) {
             return Ok(None);
         }
@@ -146,7 +146,7 @@ impl ListIndex {
         subject: ListIndexable,
         token: Token,
         more: &mut Tokens,
-    ) -> Result<Option<Self>, LineReport> {
+    ) -> Result<Option<Self>, TokenReport> {
         if token != Token::OneByte(0x10) {
             return Ok(None);
         }

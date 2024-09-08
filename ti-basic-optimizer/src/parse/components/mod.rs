@@ -1,4 +1,4 @@
-use crate::error_reporting::LineReport;
+use crate::error_reporting::TokenReport;
 pub use crate::parse::components::{
     binary_operator::BinOp,
     data_access::{ListIndex, ListIndexable, MatrixIndex, MatrixIndexable},
@@ -90,7 +90,7 @@ pub enum Operand {
 }
 
 impl Parse for Operand {
-    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, TokenReport> {
         match token {
             Token::OneByte(0x30..=0x39 | 0x3A | 0x3B) => {
                 Ok(tifloats::Float::parse(token, more)?.map(Self::NumericLiteral))

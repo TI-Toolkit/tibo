@@ -1,4 +1,4 @@
-use crate::error_reporting::{expect_some, expect_tok, next_or_err, LineReport};
+use crate::error_reporting::{expect_some, expect_tok, next_or_err, TokenReport};
 use crate::parse::expression::Expression;
 use crate::parse::{Parse, Reconstruct};
 use crate::Config;
@@ -16,7 +16,7 @@ pub struct ForLoop {
 }
 
 impl Parse for ForLoop {
-    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, TokenReport> {
         if token != Token::OneByte(0xD3) {
             return Ok(None);
         }

@@ -1,4 +1,4 @@
-use crate::error_reporting::LineReport;
+use crate::error_reporting::TokenReport;
 use crate::parse::components::NumericVarName;
 use crate::parse::{Parse, Reconstruct};
 use crate::Config;
@@ -35,7 +35,7 @@ impl TryFrom<NumericVarName> for ListName {
 
 impl ListName {
     /// Parse the up-to-5-character custom list name, without the beginning |L.
-    pub fn parse_custom_name(tokens: &mut Tokens) -> Result<Option<Self>, LineReport> {
+    pub fn parse_custom_name(tokens: &mut Tokens) -> Result<Option<Self>, TokenReport> {
         let start_position = tokens.current_position() - 1;
         let mut name = [0_u8; 5];
         let mut index = 0;
@@ -44,7 +44,7 @@ impl ListName {
             if (index == 0 && token.is_alpha()) || (index > 0 && token.is_alphanumeric()) {
                 // 0-indexed
                 if index >= 5 {
-                    return Err(LineReport::new(
+                    return Err(TokenReport::new(
                         start_position,
                         "List name has too many characters (max 5)",
                         None,
@@ -65,7 +65,7 @@ impl ListName {
         }
 
         if index == 0 {
-            Err(LineReport::new(
+            Err(TokenReport::new(
                 start_position,
                 "Expected a list name.",
                 Some("List names start with a letter A-θ."),
@@ -91,7 +91,7 @@ impl ListName {
 }
 
 impl Parse for ListName {
-    fn parse(token: Token, tokens: &mut Tokens) -> Result<Option<Self>, LineReport> {
+    fn parse(token: Token, tokens: &mut Tokens) -> Result<Option<Self>, TokenReport> {
         match token {
             // 5Dxx, lists
             Token::TwoByte(0x5D, 0x00..=0x05) => Ok(Some(ListName::Default(token))),

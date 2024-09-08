@@ -1,9 +1,11 @@
-use crate::error_reporting::{next_or_err, LineReport};
+use crate::error_reporting::{next_or_err, TokenReport};
 use crate::parse::{commands::Command, components::DelVarTarget, Parse, Reconstruct};
 use crate::Config;
 use std::iter::once;
 use titokens::{Token, Tokens};
 
+/// `DelVar` statements do not require a trailing newline, and so a series of `deletions` can be
+/// chained back-to-back.
 #[derive(Clone, Debug)]
 pub struct DelVarChain {
     pub deletions: Vec<DelVarTarget>,
@@ -11,7 +13,7 @@ pub struct DelVarChain {
 }
 
 impl Parse for DelVarChain {
-    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, TokenReport> {
         if token != Token::TwoByte(0xBB, 0x54) {
             return Ok(None);
         }

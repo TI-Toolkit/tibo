@@ -1,4 +1,4 @@
-use crate::error_reporting::{next_or_err, LineReport};
+use crate::error_reporting::{next_or_err, TokenReport};
 use crate::parse::{
     components::{
         EquationName, ListIndex, ListName, MatrixIndex, MatrixName, NumericVarName, StringName,
@@ -27,7 +27,7 @@ pub enum StoreTarget {
 }
 
 impl Parse for StoreTarget {
-    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, TokenReport> {
         match token {
             Token::OneByte(0x41..=0x5B) => {
                 if matches!(more.peek(), Some(Token::OneByte(0x41..=0x5B))) {
@@ -73,7 +73,7 @@ impl Parse for StoreTarget {
                 } else if let Some(matrix) = MatrixName::parse(next, more)? {
                     Ok(Some(Self::MatrixResizing(matrix)))
                 } else {
-                    Err(LineReport::new(
+                    Err(TokenReport::new(
                         more.current_position(),
                         "Expected a list or matrix name.",
                         Some("Storing to a dim( of a list or matrix resizes that list or matrix."),

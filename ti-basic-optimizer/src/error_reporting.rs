@@ -4,7 +4,7 @@ use titokens::tokenizer::TokenBoundaries;
 macro_rules! next_or_err {
     ($tokens: ident) => {
         $tokens.next().ok_or_else(|| {
-            (crate::error_reporting::LineReport::new(
+            (crate::error_reporting::TokenReport::new(
                 $tokens.current_position() - 2,
                 "Unexpected end of input.",
                 None,
@@ -15,7 +15,7 @@ macro_rules! next_or_err {
 
     ($tokens: ident, $message: literal) => {
         $tokens.next().ok_or_else(|| {
-            (crate::error_reporting::LineReport::new(
+            (crate::error_reporting::TokenReport::new(
                 $tokens.current_position() - 2,
                 $message,
                 None,
@@ -26,10 +26,10 @@ macro_rules! next_or_err {
 }
 
 macro_rules! expect_tok {
-    ($tokens: ident, $token: expr, $token_name: literal) => {
+    ($tokens: ident, $token: pat, $token_name: literal) => {
         crate::error_reporting::next_or_err!($tokens).and_then(|tok| {
-            if tok != ($token) {
-                Err(crate::error_reporting::LineReport::new(
+            if !matches!(tok, $token) {
+                Err(crate::error_reporting::TokenReport::new(
                     $tokens.current_position() - 1,
                     concat!("Expected token \"", $token_name, "\"."),
                     Some("Add the token."),
@@ -43,7 +43,7 @@ macro_rules! expect_tok {
     ($tokens: ident, $token: expr, $error: literal, $help: literal) => {
         crate::error_reporting::next_or_err!($tokens).and_then(|tok| {
             if tok != ($token) {
-                Err(crate::error_reporting::LineReport::new(
+                Err(crate::error_reporting::TokenReport::new(
                     $tokens.current_position() - 1,
                     $error,
                     Some($help),
@@ -58,7 +58,7 @@ macro_rules! expect_tok {
 macro_rules! expect_some {
     ($option: expr, $tokens: ident, $expected_kind: literal) => {
         $option.ok_or_else(|| {
-            crate::error_reporting::LineReport::new(
+            crate::error_reporting::TokenReport::new(
                 $tokens.current_position() - 1,
                 concat!("Expected to find ", $expected_kind, "."),
                 None,
@@ -72,7 +72,7 @@ macro_rules! expect_some {
 
     ($option: expr, $tokens: ident, $expected_kind: literal, $help: literal) => {
         $option.ok_or_else(|| {
-            crate::error_reporting::LineReport::new(
+            crate::error_reporting::TokenReport::new(
                 $tokens.current_position() - 1,
                 concat!("Expected to find ", $expected_kind, "."),
                 None,
@@ -83,7 +83,7 @@ macro_rules! expect_some {
 
     ($option: expr, $tokens: ident, $ofs: expr, $expected_kind: literal, $help: literal) => {
         $option.ok_or_else(|| {
-            crate::error_reporting::LineReport::new(
+            crate::error_reporting::TokenReport::new(
                 $tokens.current_position() - $ofs,
                 concat!("Expected to find ", $expected_kind, "."),
                 None,
@@ -113,7 +113,7 @@ impl LabelKind {
 }
 
 #[derive(Debug, Clone)]
-pub struct LineReport {
+pub struct TokenReport {
     location: usize,
     message: String,
     suggestion: Option<String>,
@@ -122,10 +122,10 @@ pub struct LineReport {
     labels: Vec<(LabelKind, String)>,
 }
 
-impl LineReport {
+impl TokenReport {
     #[must_use]
     pub fn new(location: usize, message: &str, suggestion: Option<&str>) -> Self {
-        LineReport {
+        TokenReport {
             location,
             message: message.to_string(),
             suggestion: suggestion.map(|x| x.to_string()),

@@ -1,4 +1,4 @@
-use crate::error_reporting::LineReport;
+use crate::error_reporting::TokenReport;
 use crate::parse::{Parse, Reconstruct};
 use crate::Config;
 use std::iter::once;
@@ -10,7 +10,7 @@ pub struct ProgramName {
 }
 
 impl Parse for ProgramName {
-    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, TokenReport> {
         if token != Token::OneByte(0x5F) {
             return Ok(None);
         }
@@ -23,7 +23,7 @@ impl Parse for ProgramName {
                 || (name.is_empty() && token.is_alphanumeric())
             {
                 if name.len() > 8 {
-                    Err(LineReport::new(
+                    Err(TokenReport::new(
                         start_position,
                         "Program name has too many characters (max 8)",
                         None,
@@ -43,7 +43,7 @@ impl Parse for ProgramName {
         }
 
         if name.is_empty() {
-            Err(LineReport::new(
+            Err(TokenReport::new(
                 start_position,
                 "Expected a program name.",
                 Some("Program names start with a letter A-θ."),

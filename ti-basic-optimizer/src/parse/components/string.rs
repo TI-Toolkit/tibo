@@ -1,6 +1,6 @@
 use itertools::Itertools;
 
-use crate::error_reporting::LineReport;
+use crate::error_reporting::TokenReport;
 use crate::parse::{Parse, Reconstruct};
 use crate::Config;
 use titokens::{Token, Tokens};
@@ -26,7 +26,7 @@ impl TIString {
 }
 
 impl Parse for TIString {
-    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, TokenReport> {
         if token != Token::OneByte(0x2A) {
             return Ok(None);
         }

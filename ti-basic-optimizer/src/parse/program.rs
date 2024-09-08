@@ -1,6 +1,6 @@
 use itertools::Itertools;
 
-use crate::error_reporting::LineReport;
+use crate::error_reporting::TokenReport;
 use crate::parse::commands::Command;
 use crate::parse::{Parse, Reconstruct};
 use crate::Config;
@@ -52,7 +52,7 @@ impl Program {
         }
     }
 
-    fn parse(tokens: &mut Tokens) -> Result<Program, LineReport> {
+    fn parse(tokens: &mut Tokens) -> Result<Program, TokenReport> {
         let mut lines = vec![];
 
         let mut line_number = 1;

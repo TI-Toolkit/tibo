@@ -1,4 +1,4 @@
-use crate::error_reporting::LineReport;
+use crate::error_reporting::TokenReport;
 use crate::parse::{Parse, Reconstruct};
 use crate::Config;
 use titokens::{Token, Tokens};
@@ -7,7 +7,7 @@ use titokens::{Token, Tokens};
 pub struct NumericVarName(pub Token);
 
 impl Parse for NumericVarName {
-    fn parse(token: Token, _more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+    fn parse(token: Token, _more: &mut Tokens) -> Result<Option<Self>, TokenReport> {
         Ok(match token {
             Token::OneByte(0x41..=0x5B) | Token::TwoByte(0x62, 0x21) => Some(NumericVarName(token)),
 

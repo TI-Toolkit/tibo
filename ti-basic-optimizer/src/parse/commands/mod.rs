@@ -12,7 +12,7 @@ pub use setupeditor::SetUpEditor;
 pub use generic::Generic;
 use std::iter::once;
 
-use crate::error_reporting::{expect_some, next_or_err, LineReport};
+use crate::error_reporting::{expect_some, next_or_err, TokenReport};
 use crate::parse::components::StoreTarget;
 use crate::parse::{expression::Expression, Parse, Reconstruct};
 use crate::Config;
@@ -31,7 +31,7 @@ pub enum Command {
 
 impl Parse for Command {
     #[allow(unused_parens)]
-    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, TokenReport> {
         if let Some(cmd) = Generic::parse(token, more)?.map(Command::Generic) {
             Ok(Some(cmd))
         } else if let Some(cmd) = ControlFlow::parse(token, more)?.map(Command::ControlFlow) {

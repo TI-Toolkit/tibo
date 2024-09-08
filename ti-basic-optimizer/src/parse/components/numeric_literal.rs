@@ -1,6 +1,6 @@
 use tifloats::{tifloat, Float};
 
-use crate::error_reporting::LineReport;
+use crate::error_reporting::TokenReport;
 use crate::parse::components::{string::TIString, Operand};
 use crate::parse::Parse;
 use titokens::{Token, Tokens};
@@ -178,7 +178,7 @@ impl<'a> Builder<'a> {
 }
 
 impl Parse for tifloats::Float {
-    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, TokenReport> {
         match token {
             Token::OneByte(0x30..=0x3B) => {
                 more.backtrack_once();

@@ -1,6 +1,6 @@
 use itertools::Itertools;
 
-use crate::error_reporting::LineReport;
+use crate::error_reporting::TokenReport;
 use crate::parse::expression::Expression;
 use crate::parse::{Parse, Reconstruct};
 use crate::Config;
@@ -13,7 +13,7 @@ pub struct Generic {
 }
 
 impl Parse for Generic {
-    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, LineReport> {
+    fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, TokenReport> {
         if !Generic::recognize(token) {
             return Ok(None);
         }
@@ -44,7 +44,7 @@ impl Parse for Generic {
                     }
                     Some(Token::OneByte(0x3E | 0x3F)) | None => break, // :, \n, EOF
 
-                    Some(_) => Err(LineReport::new(
+                    Some(_) => Err(TokenReport::new(
                         more.current_position() - 1,
                         "Unexpected character in command invocation",
                         Some("perhaps it's unimplemented?"),
