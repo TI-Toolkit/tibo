@@ -11,7 +11,7 @@ impl Program {
     pub fn label_declarations(&self) -> BTreeMap<LabelName, usize> {
         let mut declarations = BTreeMap::new();
 
-        for (idx, line) in self.lines.iter().enumerate() {
+        for (idx, line) in self.lines.iter().enumerate().rev() {
             if let Command::ControlFlow(ControlFlow::Lbl(name)) = line {
                 declarations.insert(*name, idx);
             }
