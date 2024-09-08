@@ -1,0 +1,5 @@
+Menu("HELLO","A",AA,"A",AA,"A",AA,"B",BB,"C",0
+Lbl AA
+Goto BB
+Lbl BB
+Lbl 0

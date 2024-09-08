@@ -3,6 +3,7 @@ use crate::parse::Program;
 
 mod expressions;
 mod strategies;
+mod control_flow;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Default)]
 pub enum Priority {
@@ -16,7 +17,9 @@ pub enum Priority {
 }
 
 impl Program {
-    pub fn optimize(&mut self, config: &Config) {
+    pub fn optimize(&mut self, _config: &Config) {
+        self.optimize_label_names();
+
         for command in self.lines.iter_mut() {
             command.optimize_parentheses();
         }

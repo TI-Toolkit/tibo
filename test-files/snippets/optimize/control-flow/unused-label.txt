@@ -1,0 +1,4 @@
+Goto A
+Lbl A
+Lbl A
+Lbl B
