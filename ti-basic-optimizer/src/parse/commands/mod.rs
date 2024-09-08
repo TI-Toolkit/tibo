@@ -20,6 +20,7 @@ use titokens::{Token, Tokens};
 
 #[derive(Clone, Debug)]
 pub enum Command {
+    None,
     ControlFlow(ControlFlow),
     Generic(Generic),
     DelVarChain(DelVarChain),
@@ -85,6 +86,7 @@ impl Reconstruct for Command {
                     .chain(target.reconstruct(config))
                     .collect()
             },
+            Command::None => return vec![],
         };
 
         Expression::strip_closing_parenthesis(&mut line);

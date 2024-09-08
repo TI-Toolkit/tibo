@@ -90,6 +90,7 @@ impl Program {
         // to worry about closing strings.
         self.lines
             .iter()
+            .filter(|x|!matches!(x, Command::None))
             .map(|line| line.reconstruct(config))
             .intersperse(vec![Token::OneByte(0x3F)])
             .flatten()
@@ -105,7 +106,7 @@ mod tests {
     #[test]
     fn parses_newlines_correctly_with_strings() {
         let mut tokens = load_test_data("/snippets/parsing/strings/newline-stuff.txt");
-        let mut program = Program::from_tokens(&mut tokens, &test_tokenizer!());
+        let program = Program::from_tokens(&mut tokens, &test_tokenizer!());
 
         assert_eq!(program.lines.len(), 5);
     }
@@ -113,7 +114,7 @@ mod tests {
     #[test]
     fn skips_blank_lines() {
         let mut tokens = load_test_data("/snippets/parsing/ten-blank-lines.txt");
-        let mut program = Program::from_tokens(&mut tokens, &test_tokenizer!());
+        let program = Program::from_tokens(&mut tokens, &test_tokenizer!());
 
         assert_eq!(program.lines.len(), 0);
     }
