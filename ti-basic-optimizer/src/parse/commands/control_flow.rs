@@ -63,6 +63,11 @@ impl LabelName {
 
         LabelName((first as u16) << 8 | second.unwrap_or(0) as u16)
     }
+
+    #[cfg(test)]
+    pub(crate) fn internal_id(&self) -> u16 {
+        self.0
+    }
 }
 
 impl Parse for LabelName {
