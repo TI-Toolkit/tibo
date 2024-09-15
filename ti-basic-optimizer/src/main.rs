@@ -4,8 +4,8 @@ use std::{fs, io, path::PathBuf};
 
 use titokens::{ti_connect_file::TIProgram, Tokenizer, Tokens, Version};
 
-use ti_basic_optimizer::parse::Program;
-use ti_basic_optimizer::*;
+use tibo::parse::Program;
+use tibo::*;
 
 #[derive(Debug)]
 enum LoadError {

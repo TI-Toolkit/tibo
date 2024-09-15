@@ -17,7 +17,7 @@ pub struct LabelName(u16);
 ///
 /// Example:
 /// ```
-/// use ti_basic_optimizer::label_name;
+/// use tibo::label_name;
 /// let lbl_12 = label_name!('1' '2');
 /// let lbl_thetatheta = label_name!("theta" "theta");
 macro_rules! label_name {
@@ -38,7 +38,7 @@ impl LabelName {
     ///
     /// Example:
     /// ```
-    /// # use ti_basic_optimizer::parse::commands::LabelName;
+    /// # use tibo::parse::commands::LabelName;
     /// // corresponds to the label defined by `Lbl PL`
     /// let lbl_pl = LabelName::new('P' as u8, Some('L' as u8));
     /// // corresponds to the label defined by `Lbl theta`
@@ -48,8 +48,8 @@ impl LabelName {
     ///
     /// Consider using the [`label_name`] macro:
     /// ```
-    /// use ti_basic_optimizer::label_name;
-    /// # use ti_basic_optimizer::parse::commands::LabelName;
+    /// use tibo::label_name;
+    /// # use tibo::parse::commands::LabelName;
     /// # let lbl_pl = LabelName::new('P' as u8, Some('L' as u8));
     /// # let lbl_theta = LabelName::new(1 + 'Z' as u8, None);
     /// assert_eq!(lbl_pl, label_name!('P' 'L'));
