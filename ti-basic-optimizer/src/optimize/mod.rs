@@ -1,9 +1,9 @@
-use crate::Config;
 use crate::parse::Program;
+use crate::Config;
 
+mod control_flow;
 mod expressions;
 mod strategies;
-mod control_flow;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Default)]
 pub enum Priority {

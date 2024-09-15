@@ -29,11 +29,11 @@ enum BranchKind {
 impl Program {
     /// Determine where block-conditionals will jump if their condition is false:
     /// - For every `If-Then`, locates the `Else` or `End` that the `If-Then` will take if the condition
-    /// is falsy.
+    ///   is falsy.
     /// - For every `Else`, locates the `End` that the `Else` will take if the condition on the `If-Then`
-    /// was truthy.
+    ///   was truthy.
     /// - For every `While` and `For(`, locates the `End` that the loop will jump to if the condition
-    /// fails immediately.
+    ///   fails immediately.
     ///
     /// Returns a [`BTreeMap`] mapping the line of the source statement to the line *after* the
     /// `End`/`Else` that was found.
@@ -155,7 +155,10 @@ impl Program {
         output
     }
 
-    /// Conditionals like `Is>(`, `Ds<(`, and `If` without a `Then` skip a single line.
+    /// Conditionals like `Is>(`, `Ds<(`, and `If` without a `Then` skip a single line. 
+    /// 
+    /// Returns a [`BTreeMap`] mapping the line of the source statement to the line after
+    /// the skipped line.
     pub fn simple_failure_paths(&self) -> BTreeMap<usize, usize> {
         let max_line_idx = self.lines.len();
 

@@ -2,7 +2,6 @@
 ///
 /// This strategy is extensively documented in
 /// [my first post on writing numbers](https://www.cemetech.net/forum/viewtopic.php?p=308266#308266).
-
 use crate::optimize::strategies::Strategy;
 use crate::parse::Reconstruct;
 use crate::Config;

@@ -77,6 +77,14 @@ impl TokenBoundaries {
 
         self.text[range].to_string()
     }
+
+    pub fn len(&self) -> usize {
+        self.boundaries.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.boundaries.is_empty()
+    }
 }
 
 impl Display for TokenBoundaries {
@@ -151,7 +159,6 @@ impl Tokenizer {
         ))
     }
 
-    #[must_use]
     pub fn stringify(&self, tokens: &[Token]) -> TokenBoundaries {
         let strings = tokens
             .iter()
@@ -188,7 +195,7 @@ mod tests {
             "en",
         );
 
-        let (tokens, boundaries) = tokenizer.tokenize(&"randInt(X^^2,Y->A").unwrap();
+        let (tokens, boundaries) = tokenizer.tokenize("randInt(X^^2,Y->A").unwrap();
 
         assert_eq!(
             tokens.collect::<Vec<_>>(),

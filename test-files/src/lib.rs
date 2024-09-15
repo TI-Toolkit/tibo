@@ -26,21 +26,24 @@ mod tests {
     }
 }
 
-pub use titokens::{Version, Tokenizer, Model};
+pub use titokens::{Model, Tokenizer, Version};
 
 #[macro_export]
 macro_rules! test_version {
-    () => {$crate::Version {
-        model: $crate::Model::TI84PCE,
-        os_version: "5.3.0".to_string(),
-    }};
+    () => {
+        $crate::Version {
+            model: $crate::Model::TI84PCE,
+            os_version: "5.3.0".to_string(),
+        }
+    };
 }
 
 #[macro_export]
 macro_rules! test_tokenizer {
-    () => {$crate::Tokenizer::new($crate::test_version!(), "en")};
+    () => {
+        $crate::Tokenizer::new($crate::test_version!(), "en")
+    };
 }
-
 
 pub fn load_test_data(file: &str) -> titokens::Tokens {
     let tokenizer = test_tokenizer!();

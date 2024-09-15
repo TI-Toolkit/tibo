@@ -90,7 +90,7 @@ impl Program {
         // to worry about closing strings.
         self.lines
             .iter()
-            .filter(|x|!matches!(x, Command::None))
+            .filter(|x| !matches!(x, Command::None))
             .map(|line| line.reconstruct(config))
             .intersperse(vec![Token::OneByte(0x3F)])
             .flatten()
@@ -126,8 +126,8 @@ mod tests {
     /// 4. Export to file B
     /// 5. Then, check A == B
     mod round_trip {
-        use test_files::test_version;
         use super::*;
+        use test_files::test_version;
         macro_rules! round_trip {
             ($name: ident, $path: expr, $debug: expr) => {
                 #[test]
@@ -144,12 +144,10 @@ mod tests {
                     let b = a_program.reconstruct(&config);
 
                     if $debug {
-                        dbg!(
-                            Tokens::from_vec(a.clone(), Some(test_version!())).to_string(&tokenizer)
-                        );
-                        dbg!(
-                            Tokens::from_vec(b.clone(), Some(test_version!())).to_string(&tokenizer)
-                        );
+                        dbg!(Tokens::from_vec(a.clone(), Some(test_version!()))
+                            .to_string(&tokenizer));
+                        dbg!(Tokens::from_vec(b.clone(), Some(test_version!()))
+                            .to_string(&tokenizer));
                     }
 
                     assert_eq!(a, b);

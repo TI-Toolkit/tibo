@@ -78,14 +78,13 @@ impl Reconstruct for Command {
             Command::Expression(x) => x.reconstruct(config),
             Command::ProgramInvocation(x) => x.reconstruct(config),
             Command::Store(x, target) => {
-                let mut expr = x
-                    .reconstruct(config);
+                let mut expr = x.reconstruct(config);
                 Expression::strip_closing_parenthesis(&mut expr);
                 expr.into_iter()
                     .chain(once(Token::OneByte(0x04)))
                     .chain(target.reconstruct(config))
                     .collect()
-            },
+            }
             Command::None => return vec![],
         };
 

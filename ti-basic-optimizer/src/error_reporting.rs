@@ -189,7 +189,7 @@ impl TokenReport {
             );
         } else {
             builder = builder.with_labels(self.labels.iter().map(|(label_kind, message)| {
-                ariadne::Label::new(label_kind.string_indices(&boundaries)).with_message(message)
+                ariadne::Label::new(label_kind.string_indices(boundaries)).with_message(message)
             }))
         }
 

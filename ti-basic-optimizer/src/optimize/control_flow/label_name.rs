@@ -5,12 +5,12 @@
 //! As a micro-optimization, we choose letters before numbers because letters seem to be faster by a
 //! handful of CC's (perhaps they're checked first?).
 
-use itertools::Itertools;
+use crate::parse::commands::control_flow::Menu;
 use crate::parse::{
     commands::{Command, ControlFlow, LabelName},
     Program,
 };
-use crate::parse::commands::control_flow::Menu;
+use itertools::Itertools;
 
 const DICTIONARY: [u8; 37] = [
     // A-Z, theta
@@ -71,20 +71,19 @@ impl Program {
     /// This optimization has two steps:
     /// - Clear unused label declarations
     /// - Optimize the length of label names so that more commonly used labels have shorter names.
+    ///
     /// See also: [`label_name`]
     pub fn optimize_label_names(&mut self) {
         let label_declarations = self.label_declarations();
         let label_usages = self.label_usages();
 
         for (line_idx, line) in self.lines.iter_mut().enumerate() {
-            match line {
-                Command::ControlFlow(ControlFlow::Lbl(decl_label)) => {
-                    if !label_usages.contains_key(decl_label) || label_declarations[decl_label] != line_idx {
-                        *line = Command::None;
-                    }
+            if let Command::ControlFlow(ControlFlow::Lbl(decl_label)) = line {
+                if !label_usages.contains_key(decl_label)
+                    || label_declarations[decl_label] != line_idx
+                {
+                    *line = Command::None;
                 }
-
-                _ => {}
             }
         }
 
@@ -111,7 +110,7 @@ impl Program {
 
             for i in 0..usages.len() {
                 let usage = usages[i];
-                if i != 0 && usages[i-1] == usages[i] {
+                if i != 0 && usages[i - 1] == usages[i] {
                     continue;
                 }
 
@@ -120,7 +119,9 @@ impl Program {
                         *usage_label = new_name;
                     }
 
-                    Some(Command::ControlFlow(ControlFlow::Menu(Menu {option_labels, ..}))) => {
+                    Some(Command::ControlFlow(ControlFlow::Menu(Menu {
+                        option_labels, ..
+                    }))) => {
                         for used_label in option_labels {
                             if label == used_label {
                                 *used_label = new_name;
@@ -138,10 +139,10 @@ impl Program {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use crate::label_name;
     use std::collections::{BTreeMap, BTreeSet};
     use test_files::{load_test_data, test_tokenizer};
-    use crate::label_name;
-    use super::*;
 
     // This is a correctness guarantee, by the pigeonhole principle and the fact that constructing a
     // LabelName performs a check on the validity of the bytes being passed.

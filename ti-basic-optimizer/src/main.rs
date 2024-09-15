@@ -82,15 +82,14 @@ fn main() {
     };
 
     let version = titokens::version::LATEST.clone();
-            let config = Config {
-                mrov: version.clone(),
-                priority,
-        };
-                let tokenizer = Tokenizer::new(version.clone(), "en");
+    let config = Config {
+        mrov: version.clone(),
+        priority,
+    };
+    let tokenizer = Tokenizer::new(version.clone(), "en");
 
     if let Ok(mut program) = loaded {
         if cfg!(feature = "round-trip") {
-
             let a = program.reconstruct(&config);
             let a_program = Program::from_tokens(
                 &mut Tokens::from_vec(a.clone(), Some(version.clone())),

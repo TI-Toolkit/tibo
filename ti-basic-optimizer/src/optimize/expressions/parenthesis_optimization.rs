@@ -163,7 +163,9 @@ impl Command {
 
             Command::ControlFlow(control_flow) => {
                 match control_flow {
-                    ControlFlow::If(expr) | ControlFlow::While(expr) | ControlFlow::Repeat(expr) => {
+                    ControlFlow::If(expr)
+                    | ControlFlow::While(expr)
+                    | ControlFlow::Repeat(expr) => {
                         expr.optimize_parentheses();
                     }
                     ControlFlow::For(for_loop) => {
@@ -205,15 +207,17 @@ impl Command {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::parse::{Parse, Reconstruct};
     use test_files::{load_test_data, test_version};
-    use super::*;
 
     #[test]
     fn parenthesis_optimization() {
         let cases = [("1.txt", 3), ("2.txt", 1)];
         for (case_name, expected_savings) in cases {
-            let mut tokens = load_test_data(&("/snippets/optimize/parentheses/maximization/".to_string() + case_name));
+            let mut tokens = load_test_data(
+                &("/snippets/optimize/parentheses/maximization/".to_string() + case_name),
+            );
             let mut expr = Expression::parse(tokens.next().unwrap(), &mut tokens)
                 .unwrap()
                 .unwrap();
@@ -225,15 +229,24 @@ mod tests {
             let mut optimized = reconstructed.clone();
             Expression::strip_closing_parenthesis(&mut optimized);
 
-            assert_eq!(expected_savings, (reconstructed.len() - optimized.len()) as u16);
+            assert_eq!(
+                expected_savings,
+                (reconstructed.len() - optimized.len()) as u16
+            );
         }
     }
 
     #[test]
     fn strip_closing_parentheses() {
         for case in ["1.txt", "2.txt", "3.txt", "4.txt", "5.txt", "6.txt"] {
-            let mut actual = load_test_data(&("/snippets/optimize/parentheses/stripping/before/".to_string() + case)).collect::<Vec<_>>();
-            let expected = load_test_data(&("/snippets/optimize/parentheses/stripping/after/".to_string() + case)).collect::<Vec<_>>();
+            let mut actual = load_test_data(
+                &("/snippets/optimize/parentheses/stripping/before/".to_string() + case),
+            )
+            .collect::<Vec<_>>();
+            let expected = load_test_data(
+                &("/snippets/optimize/parentheses/stripping/after/".to_string() + case),
+            )
+            .collect::<Vec<_>>();
             Expression::strip_closing_parenthesis(&mut actual);
 
             assert_eq!(actual, expected);
