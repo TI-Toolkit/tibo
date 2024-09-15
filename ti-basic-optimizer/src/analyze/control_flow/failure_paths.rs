@@ -36,11 +36,14 @@ impl Program {
     ///   fails immediately.
     ///
     /// Returns a [`BTreeMap`] mapping the line of the source statement to the line *after* the
-    /// `End`/`Else` that was found.
+    /// `End`/`Else` that was found. Blocks without `End`s continue to the end of the program;
+    /// their source statements map to the line after the last line of the input program.
     ///
     /// Most of the logic here is explored in <https://www.cemetech.net/forum/viewtopic.php?p=307835>
     /// and <https://www.cemetech.net/forum/viewtopic.php?p=307861>
     pub fn block_failure_paths(&self) -> BTreeMap<usize, usize> {
+        let program_end_idx = self.lines.len();
+
         let mut lines = self.lines.iter().enumerate().peekable();
         let mut output: BTreeMap<usize, usize> = BTreeMap::new();
 
@@ -152,11 +155,15 @@ impl Program {
             }
         }
 
+        for branch in stack {
+            output.insert(branch.idx, program_end_idx);
+        }
+
         output
     }
 
-    /// Conditionals like `Is>(`, `Ds<(`, and `If` without a `Then` skip a single line. 
-    /// 
+    /// Conditionals like `Is>(`, `Ds<(`, and `If` without a `Then` skip a single line.
+    ///
     /// Returns a [`BTreeMap`] mapping the line of the source statement to the line after
     /// the skipped line.
     pub fn simple_failure_paths(&self) -> BTreeMap<usize, usize> {
@@ -206,10 +213,7 @@ impl Program {
     /// Union of [`Program::simple_failure_paths`] and [`Program::block_failure_paths`].
     pub fn failure_paths(&self) -> BTreeMap<usize, usize> {
         let mut all = self.simple_failure_paths();
-        for (source, dest) in self.block_failure_paths() {
-            assert!(!all.contains_key(&source));
-            all.insert(source, dest);
-        }
+        all.append(&mut self.block_failure_paths());
 
         all
     }
