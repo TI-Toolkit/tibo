@@ -48,7 +48,7 @@ impl<'a> Builder<'a> {
         self.finalize()
     }
 
-    fn error(&self, code: usize) -> TokenReport {
+    fn error(&self, code: u16) -> TokenReport {
         TokenReport::new(
             self.tokens.current_position(),
             "Expression parsing error",

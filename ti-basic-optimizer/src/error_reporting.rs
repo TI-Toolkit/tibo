@@ -112,15 +112,30 @@ impl LabelKind {
     }
 }
 
+pub trait Report: Sized {
+    /// Format and print this error to stderr, using the provided [`TokenBoundaries`] to translate
+    /// the tokens. This does
+    ///
+    /// The `ariadne` crate seems to choke on Unicode input; tokenize without Unicode.
+    fn report(self, boundaries: TokenBoundaries) {
+        self.translate(&boundaries)
+            .eprint(ariadne::Source::from(boundaries.to_string()))
+            .unwrap();
+    }
+
+    fn translate<'a>(self, boundaries: &TokenBoundaries) -> ariadne::Report<'a>;
+}
+
 /// `TokenReport` is used to report errors at the token level.
 ///
 /// Token indices are usually obtained by calling [`Tokens::current_position`](titokens::Tokens::current_position).
 #[derive(Debug, Clone)]
+#[must_use]
 pub struct TokenReport {
     location: usize,
     message: String,
     suggestion: Option<String>,
-    code: Option<usize>,
+    code: Option<u16>,
 
     labels: Vec<(LabelKind, String)>,
 }
@@ -129,7 +144,6 @@ impl TokenReport {
     /// New error at the provided token index.
     ///
     /// Token indices are usually obtained by calling [`Tokens::current_position`](titokens::Tokens::current_position).
-    #[must_use]
     pub fn new(location: usize, message: &str, suggestion: Option<&str>) -> Self {
         TokenReport {
             location,
@@ -144,7 +158,6 @@ impl TokenReport {
     /// Add a label at the provided range of token indices.
     ///
     /// Token indices are usually obtained by calling [`Tokens::current_position`](titokens::Tokens::current_position).
-    #[must_use]
     pub fn with_span_label(mut self, location: Range<usize>, message: &str) -> Self {
         self.labels
             .push((LabelKind::Span(location), message.to_string()));
@@ -155,7 +168,6 @@ impl TokenReport {
     /// Add a label at the provided token index.
     ///
     /// Token indices are usually obtained by calling [`Tokens::current_position`](titokens::Tokens::current_position).
-    #[must_use]
     pub fn with_label(mut self, location: usize, message: &str) -> Self {
         self.labels
             .push((LabelKind::Single(location), message.to_string()));
@@ -164,18 +176,15 @@ impl TokenReport {
     }
 
     /// Provide an error code for this error.
-    #[must_use]
-    pub fn with_code(mut self, error_code: usize) -> Self {
+    pub fn with_code(mut self, error_code: u16) -> Self {
         self.code = Some(error_code);
 
         self
     }
+}
 
-    /// Format and print this error to stderr, using the provided [`TokenBoundaries`] to translate
-    /// the tokens.
-    ///
-    /// [`ariadne`] seems to choke on Unicode input; tokenize without Unicode.
-    pub fn error(self, boundaries: TokenBoundaries) {
+impl Report for TokenReport {
+    fn translate<'a>(self, boundaries: &TokenBoundaries) -> ariadne::Report<'a> {
         let mut builder = ariadne::Report::build(
             ariadne::ReportKind::Error,
             (),
@@ -201,9 +210,69 @@ impl TokenReport {
             builder = builder.with_code(code);
         }
 
-        builder
-            .finish()
-            .eprint(ariadne::Source::from(boundaries.to_string()))
-            .unwrap();
+        builder.finish()
+    }
+}
+
+/// `LineReport` is used to report errors which occur on a single line. The entire line is marked as an error.
+#[derive(Clone, Debug)]
+#[must_use]
+pub struct LineReport {
+    location: usize,
+    message: String,
+    suggestion: Option<String>,
+}
+
+impl LineReport {
+    /// Construct a new [`LineReport`] at the provided line.
+    pub fn new(location: usize, message: &str, suggestion: Option<&str>) -> Self {
+        LineReport {
+            location,
+            message: message.to_string(),
+            suggestion: suggestion.map(|x| x.to_string()),
+        }
+    }
+}
+
+impl Report for LineReport {
+    fn translate<'a>(self, boundaries: &TokenBoundaries) -> ariadne::Report<'a> {
+        let mut line_start_idx = None;
+        let mut line_end_idx = None;
+        // this is pretty expensive but we only have to do it once so it's not really worth doing anything smarter
+        let mut line_idx = 0;
+        for token_idx in 0..boundaries.len() {
+            if boundaries.str_at_single(token_idx) == "\n" {
+                line_idx += 1;
+                if line_idx == self.location {
+                    line_start_idx = Some(boundaries.single(token_idx).end);
+                } else if line_idx == self.location + 1 {
+                    line_end_idx = Some(boundaries.single(token_idx).start);
+                }
+            }
+        }
+
+        if line_start_idx.is_none() {
+            // we *are* in the error reporting code. perhaps we could give a custom report? Problem: we don't know where to say the report
+            // is supposed to be, and misleading the user is worse than giving something vague.
+            panic!(
+                "Internal Error: Invalid line number ({0}, max {line_idx}) for error report.",
+                self.location
+            );
+        }
+
+        if line_end_idx.is_none() {
+            line_end_idx = Some(boundaries.single(boundaries.len() - 1).end);
+        }
+
+        let range = line_start_idx.unwrap()..line_end_idx.unwrap();
+
+        let mut builder = ariadne::Report::build(ariadne::ReportKind::Error, (), range.start)
+            .with_label(ariadne::Label::new(range).with_message(self.message));
+
+        if let Some(suggestion) = self.suggestion {
+            builder = builder.with_help(suggestion);
+        }
+
+        builder.finish()
     }
 }

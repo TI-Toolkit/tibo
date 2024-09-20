@@ -1,6 +1,6 @@
 use itertools::Itertools;
 
-use crate::error_reporting::TokenReport;
+use crate::error_reporting::{Report, TokenReport};
 use crate::parse::commands::Command;
 use crate::parse::{Parse, Reconstruct};
 use crate::Config;
@@ -17,7 +17,7 @@ impl Program {
             match Program::parse(&mut tokens) {
                 Ok(prog) => prog,
                 Err(report) => {
-                    report.error(boundaries);
+                    report.report(boundaries);
 
                     if cfg!(test) {
                         panic!("Error thrown; aborting.");
@@ -41,7 +41,7 @@ impl Program {
             Ok(prog) => prog,
             Err(report) => {
                 let boundaries = tokens.stringify_with_boundaries(tokenizer);
-                report.error(boundaries);
+                report.report(boundaries);
 
                 if cfg!(test) {
                     panic!("Error thrown; aborting.");
