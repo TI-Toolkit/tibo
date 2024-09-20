@@ -28,6 +28,19 @@ pub enum Command {
     Expression(Expression),
     Store(Expression, StoreTarget),
     ProgramInvocation(ProgramName),
+
+    /// Fictional commands are inserted to desugar the program. They do not affect Ans
+    Fiction(Box<Command>),
+}
+
+impl Command {
+    /// Promote a fictional command to a real command.
+    pub fn promote(command: Self) -> Option<Self> {
+        match command {
+            Command::Fiction(boxed_command) => Some(*boxed_command),
+            _ => None
+        }
+    }
 }
 
 impl Parse for Command {
@@ -71,6 +84,7 @@ impl Parse for Command {
 impl Reconstruct for Command {
     fn reconstruct(&self, config: &Config) -> Vec<Token> {
         let mut line = match self {
+            Command::Fiction(x) => x.reconstruct(config),
             Command::ControlFlow(x) => x.reconstruct(config),
             Command::Generic(x) => x.reconstruct(config),
             Command::DelVarChain(x) => x.reconstruct(config),
