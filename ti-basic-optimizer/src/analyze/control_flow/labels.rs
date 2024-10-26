@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use crate::data::partition_map::PartitionMap;
 use crate::parse::commands::{control_flow::Menu, ControlFlow};
 use crate::parse::{
     commands::{Command, LabelName},
@@ -18,6 +19,16 @@ impl Program {
         }
 
         declarations
+    }
+
+    pub fn line_to_label_map(&self) -> PartitionMap<usize, LabelName> {
+        let mut declarations = self.label_declarations().into_iter().collect::<Vec<_>>();
+        
+        declarations.sort_by_key(|entry| entry.1);
+
+        let (names, begins): (Vec<LabelName>, Vec<usize>) = declarations.into_iter().unzip();
+
+        PartitionMap::new(begins, names)
     }
 
     /// Compute a mapping from label names to label usages (namely, `Goto `, `Menu(`)
@@ -82,5 +93,18 @@ mod tests {
         expected.insert(label_name!('0'), 4);
 
         assert_eq!(test_program.label_declarations(), expected)
+    }
+
+    #[test]
+    fn label_maps() {
+        let test_program = program();
+
+        let map = test_program.line_to_label_map();
+
+        assert_eq!(map.find(&0), Some(&label_name!('R' 'E')));
+        assert_eq!(map.find(&1), Some(&label_name!('R' 'E')));
+        assert_eq!(map.find(&2), Some(&label_name!('P' 'L')));
+        assert_eq!(map.find(&3), Some(&label_name!('P' 'L')));
+        assert_eq!(map.find(&4), Some(&label_name!('0')));
     }
 }
