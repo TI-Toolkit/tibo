@@ -123,7 +123,7 @@ impl<T> Digraph<T> {
 #[cfg(test)]
 mod tests {
     use super::Digraph;
-    
+
     #[test]
     #[should_panic]
     fn cant_have_two_refmut_to_same_block() {
