@@ -9,6 +9,23 @@ use std::cell::{Ref, RefCell, RefMut};
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub struct NodeIndex(usize);
 
+#[cfg(feature = "debug-tools")]
+mod debug {
+    use super::*;
+    use std::fmt::Display;
+
+    impl Display for NodeIndex {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.write_str(&("idx".to_string() + &self.0.to_string()))
+        }
+    }
+
+    impl NodeIndex {
+        pub fn id(&self) -> usize {
+            self.0
+        }
+    }
+}
 /// Implements a directed cyclic graph.
 pub struct Digraph<T> {
     nodes: Vec<RefCell<T>>,
@@ -68,12 +85,45 @@ impl<T> Digraph<T> {
         self.out_arcs[from.0].push(to.0);
         self.in_arcs[to.0].push(from.0);
     }
+
+    pub fn nodes(&self) -> impl Iterator<Item = (NodeIndex, Ref<T>)> {
+        self.nodes
+            .iter()
+            .enumerate()
+            .map(|(index, node)| (NodeIndex(index), node.borrow()))
+    }
+
+    pub fn nodes_mut(&self) -> impl Iterator<Item = (NodeIndex, RefMut<T>)> {
+        self.nodes
+            .iter()
+            .enumerate()
+            .map(|(index, node)| (NodeIndex(index), node.borrow_mut()))
+    }
+
+    /// Iterator over `(from, to)` pairs of directed edges.
+    ///
+    /// No guarantee is made over the order of edges that will be returned.
+    pub fn arcs(&self) -> impl Iterator<Item = (NodeIndex, NodeIndex)> + '_ {
+        self.out_arcs
+            .iter()
+            .enumerate()
+            .flat_map(|(idx, destinations)| {
+                destinations
+                    .into_iter()
+                    .map(move |&dest| (NodeIndex(idx), NodeIndex(dest)))
+            })
+    }
+
+    /// Number of nodes.
+    pub fn size(&self) -> usize {
+        self.nodes.len()
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::analyze::control_flow::graph::Digraph;
-
+    use super::Digraph;
+    
     #[test]
     #[should_panic]
     fn cant_have_two_refmut_to_same_block() {

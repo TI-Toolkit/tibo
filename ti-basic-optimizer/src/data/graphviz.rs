@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 
 use dot_writer::{DotWriter, Scope};
 
@@ -16,6 +16,37 @@ pub fn next_color() -> String {
     };
 
     format!("#{:02X}{:02X}{:02X}", color.r, color.g, color.b)
+}
+
+#[derive(Clone)]
+pub enum Coloring {
+    None,
+    Fixed(String),
+    Random,
+}
+
+impl Display for Coloring {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&match self {
+            Coloring::None => "black".to_string(),
+            Coloring::Fixed(s) => s.clone(),
+            Coloring::Random => next_color(),
+        })
+    }
+}
+
+impl Coloring {
+    pub fn is_none(&self) -> bool {
+        matches!(self, Self::None)
+    }
+
+    pub fn is_random(&self) -> bool {
+        matches!(self, Self::Random)
+    }
+
+    pub fn is_fixed(&self) -> bool {
+        matches!(self, Self::Fixed(_))
+    }
 }
 
 pub trait Visualize<T: Sized> {
