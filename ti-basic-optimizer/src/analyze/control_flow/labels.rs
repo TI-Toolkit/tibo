@@ -1,9 +1,9 @@
 use std::collections::BTreeMap;
 
 use crate::data::partition_map::PartitionMap;
-use crate::parse::commands::{control_flow::Menu, ControlFlow};
+use crate::parse::statements::{control_flow::Menu, ControlFlow};
 use crate::parse::{
-    commands::{Command, LabelName},
+    statements::{Statement, LabelName},
     Program,
 };
 
@@ -13,7 +13,7 @@ impl Program {
         let mut declarations = BTreeMap::new();
 
         for (idx, line) in self.lines.iter().enumerate().rev() {
-            if let Command::ControlFlow(ControlFlow::Lbl(name)) = line {
+            if let Statement::ControlFlow(ControlFlow::Lbl(name)) = line {
                 declarations.insert(*name, idx);
             }
         }
@@ -40,11 +40,11 @@ impl Program {
 
         for (idx, line) in self.lines.iter().enumerate() {
             match line {
-                Command::ControlFlow(ControlFlow::Goto(label)) => {
+                Statement::ControlFlow(ControlFlow::Goto(label)) => {
                     usages.entry(*label).or_default().push(idx);
                 }
 
-                Command::ControlFlow(ControlFlow::Menu(Menu { option_labels, .. })) => {
+                Statement::ControlFlow(ControlFlow::Menu(Menu { option_labels, .. })) => {
                     for label in option_labels {
                         usages.entry(*label).or_default().push(idx);
                     }

@@ -1,5 +1,5 @@
 use crate::error_reporting::{expect_some, expect_tok, next_or_err, TokenReport};
-use crate::parse::{commands::control_flow::LabelName, expression::Expression, Parse, Reconstruct};
+use crate::parse::{statements::control_flow::LabelName, expression::Expression, Parse, Reconstruct};
 use crate::Config;
 use std::iter::once;
 use titokens::{Token, Tokens};
@@ -105,7 +105,7 @@ mod tests {
 
     #[test]
     fn parse() {
-        let mut tokens = load_test_data("/snippets/parsing/commands/menu.txt");
+        let mut tokens = load_test_data("/snippets/parsing/statements/menu.txt");
 
         let menu = Menu::parse(tokens.next().unwrap(), &mut tokens)
             .ok()
@@ -120,7 +120,7 @@ mod tests {
 
     #[test]
     fn reconstruct() {
-        let data = load_test_data("/snippets/parsing/commands/menu.txt");
+        let data = load_test_data("/snippets/parsing/statements/menu.txt");
         let mut tokens = data.clone();
         let menu = Menu::parse(tokens.next().unwrap(), &mut tokens)
             .unwrap()

@@ -20,8 +20,8 @@ impl Program {
     pub fn optimize(&mut self, _config: &Config) {
         self.optimize_label_names();
 
-        for command in self.lines.iter_mut() {
-            command.optimize_parentheses();
+        for statement in self.lines.iter_mut() {
+            statement.optimize_parentheses();
         }
     }
 }

@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use titokens::{Token, Tokens};
 
-pub mod commands;
+pub mod statements;
 pub mod components;
 pub mod expression;
 mod program;

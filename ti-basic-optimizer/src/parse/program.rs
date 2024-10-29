@@ -1,13 +1,13 @@
 use itertools::Itertools;
 
 use crate::error_reporting::{Report, TokenReport};
-use crate::parse::commands::Command;
+use crate::parse::statements::Statement;
 use crate::parse::{Parse, Reconstruct};
 use crate::Config;
 use titokens::{Token, Tokenizer, Tokens, Version};
 
 pub struct Program {
-    pub lines: Vec<Command>,
+    pub lines: Vec<Statement>,
 }
 
 impl Program {
@@ -66,8 +66,8 @@ impl Program {
                 _ => {}
             }
 
-            if let Some(command) = Command::parse(next, tokens)? {
-                lines.push(command);
+            if let Some(statement) = Statement::parse(next, tokens)? {
+                lines.push(statement);
             }
 
             match tokens.peek() {
@@ -90,7 +90,7 @@ impl Program {
         // to worry about closing strings.
         self.lines
             .iter()
-            .filter(|x| !matches!(x, Command::None))
+            .filter(|x| !matches!(x, Statement::None))
             .map(|line| line.reconstruct(config))
             .intersperse(vec![Token::OneByte(0x3F)])
             .flatten()

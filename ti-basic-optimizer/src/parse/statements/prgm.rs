@@ -69,7 +69,7 @@ mod tests {
 
     #[test]
     fn parse() {
-        let mut tokens = load_test_data("/snippets/parsing/commands/prgm.txt");
+        let mut tokens = load_test_data("/snippets/parsing/statements/prgm.txt");
 
         let prgm = ProgramName::parse(tokens.next().unwrap(), &mut tokens)
             .unwrap()

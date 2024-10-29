@@ -22,11 +22,11 @@ pub struct LabelName(u16);
 /// let lbl_thetatheta = label_name!("theta" "theta");
 macro_rules! label_name {
     ($first: tt $second: tt) => {
-        $crate::parse::commands::LabelName::new(label_name!(<internal> $first), Some(label_name!(<internal> $second)))
+        $crate::parse::statements::LabelName::new(label_name!(<internal> $first), Some(label_name!(<internal> $second)))
     };
 
     ($first: tt) => {
-        $crate::parse::commands::LabelName::new(label_name!(<internal> $first), None)
+        $crate::parse::statements::LabelName::new(label_name!(<internal> $first), None)
     };
 
     (<internal> "theta") => { 0x5B };
@@ -38,7 +38,7 @@ impl LabelName {
     ///
     /// Example:
     /// ```
-    /// # use tibo::parse::commands::LabelName;
+    /// # use tibo::parse::statements::LabelName;
     /// // corresponds to the label defined by `Lbl PL`
     /// let lbl_pl = LabelName::new('P' as u8, Some('L' as u8));
     /// // corresponds to the label defined by `Lbl theta`
@@ -49,7 +49,7 @@ impl LabelName {
     /// Consider using the [`label_name`] macro:
     /// ```
     /// use tibo::label_name;
-    /// # use tibo::parse::commands::LabelName;
+    /// # use tibo::parse::statements::LabelName;
     /// # let lbl_pl = LabelName::new('P' as u8, Some('L' as u8));
     /// # let lbl_theta = LabelName::new(1 + 'Z' as u8, None);
     /// assert_eq!(lbl_pl, label_name!('P' 'L'));

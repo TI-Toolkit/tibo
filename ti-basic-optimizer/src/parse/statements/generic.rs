@@ -18,19 +18,19 @@ impl Parse for Generic {
             return Ok(None);
         }
 
-        let mut command = Generic {
+        let mut statement = Generic {
             kind: token,
             arguments: vec![],
         };
 
-        let command_position = more.current_position() - 1;
+        let statement_position = more.current_position() - 1;
 
         if Generic::accepts_parameters(token)
             && !matches!(more.peek(), Some(Token::OneByte(0x3E | 0x3F)) | None)
         {
             let mut next = more.next().unwrap();
             while let Some(expr) = Expression::parse(next, more)? {
-                command.arguments.push(expr);
+                statement.arguments.push(expr);
 
                 match more.peek() {
                     Some(Token::OneByte(0x2B)) => {
@@ -46,10 +46,10 @@ impl Parse for Generic {
 
                     Some(_) => Err(TokenReport::new(
                         more.current_position() - 1,
-                        "Unexpected character in command invocation",
+                        "Unexpected character in statement invocation",
                         Some("perhaps it's unimplemented?"),
                     )
-                    .with_label(command_position, "This command.")
+                    .with_label(statement_position, "This statement.")
                     .with_label(more.current_position() - 1, "here"))?,
                 }
 
@@ -57,7 +57,7 @@ impl Parse for Generic {
             }
         }
 
-        Ok(Some(command))
+        Ok(Some(statement))
     }
 }
 
@@ -292,7 +292,7 @@ impl Generic {
         )
     }
 
-    /// For commands which [accept parameters], does the command permit a closing parenthesis at the
+    /// For statements which [accept parameters], does the statement permit a closing parenthesis at the
     /// end of its line?
     fn has_opening_parenthesis(token: Token) -> bool {
         matches!(

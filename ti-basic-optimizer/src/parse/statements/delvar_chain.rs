@@ -1,5 +1,5 @@
 use crate::error_reporting::{next_or_err, TokenReport};
-use crate::parse::{commands::Command, components::DelVarTarget, Parse, Reconstruct};
+use crate::parse::{statements::Statement, components::DelVarTarget, Parse, Reconstruct};
 use crate::Config;
 use std::iter::once;
 use titokens::{Token, Tokens};
@@ -9,7 +9,7 @@ use titokens::{Token, Tokens};
 #[derive(Clone, Debug)]
 pub struct DelVarChain {
     pub deletions: Vec<DelVarTarget>,
-    pub valence: Option<Box<Command>>,
+    pub valence: Option<Box<Statement>>,
 }
 
 impl Parse for DelVarChain {
@@ -36,7 +36,7 @@ impl Parse for DelVarChain {
         }
 
         if !matches!(more.peek(), None | Some(Token::OneByte(0x3E | 0x3F))) {
-            chain.valence = Command::parse(next_or_err!(more)?, more)?.map(Box::new);
+            chain.valence = Statement::parse(next_or_err!(more)?, more)?.map(Box::new);
         }
 
         Ok(Some(chain))

@@ -5,7 +5,7 @@
 use std::mem;
 use titokens::Token;
 
-use crate::parse::commands::{Command, ControlFlow, Generic};
+use crate::parse::statements::{Statement, ControlFlow, Generic};
 use crate::parse::components::{ListIndex, MatrixIndex, StoreTarget};
 use crate::parse::{
     components::{Operand, Operator},
@@ -152,16 +152,16 @@ impl Expression {
     }
 }
 
-impl Command {
+impl Statement {
     pub fn optimize_parentheses(&mut self) {
         match self {
-            Command::Generic(Generic { arguments, .. }) => {
+            Statement::Generic(Generic { arguments, .. }) => {
                 if let Some(last) = arguments.last_mut() {
                     last.optimize_parentheses();
                 }
             }
 
-            Command::ControlFlow(control_flow) => {
+            Statement::ControlFlow(control_flow) => {
                 match control_flow {
                     ControlFlow::If(expr)
                     | ControlFlow::While(expr)
@@ -183,10 +183,10 @@ impl Command {
                 }
             }
 
-            Command::Expression(expr) => {
+            Statement::Expression(expr) => {
                 expr.optimize_parentheses();
             }
-            Command::Store(expr, target) => {
+            Statement::Store(expr, target) => {
                 expr.optimize_parentheses();
                 match target {
                     StoreTarget::ListIndex(index) => {

@@ -17,7 +17,7 @@ impl Parse for SetUpEditor {
             return Ok(None);
         }
 
-        let command_position = more.current_position();
+        let statement_position = more.current_position();
 
         let mut lists = vec![];
         if matches!(more.peek(), Some(Token::OneByte(0x3E | 0x3F)) | None) {
@@ -49,7 +49,7 @@ impl Parse for SetUpEditor {
                         "Unexpected character in SetUpEditor",
                         None,
                     )
-                    .with_label(command_position, "This SetUpEditor.")
+                    .with_label(statement_position, "This SetUpEditor.")
                     .with_label(more.current_position() - 1, "here"))?,
                 }
             }

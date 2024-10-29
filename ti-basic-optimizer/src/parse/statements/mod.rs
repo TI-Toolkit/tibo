@@ -19,7 +19,7 @@ use crate::Config;
 use titokens::{Token, Tokens};
 
 #[derive(Clone, Debug)]
-pub enum Command {
+pub enum Statement {
     None,
     ControlFlow(ControlFlow),
     Generic(Generic),
@@ -29,30 +29,30 @@ pub enum Command {
     Store(Expression, StoreTarget),
     ProgramInvocation(ProgramName),
 
-    /// Fictional commands are inserted to desugar the program. They do not affect Ans
-    Fiction(Box<Command>),
+    /// Fictional statements are inserted to desugar the program. They do not affect Ans
+    Fiction(Box<Statement>),
 }
 
-impl Command {
-    /// Promote a fictional command to a real command.
-    pub fn promote(command: Self) -> Option<Self> {
-        match command {
-            Command::Fiction(boxed_command) => Some(*boxed_command),
+impl Statement {
+    /// Promote a fictional statement to a real statement.
+    pub fn promote(statement: Self) -> Option<Self> {
+        match statement {
+            Statement::Fiction(boxed_statement) => Some(*boxed_statement),
             _ => None
         }
     }
 }
 
-impl Parse for Command {
+impl Parse for Statement {
     #[allow(unused_parens)]
     fn parse(token: Token, more: &mut Tokens) -> Result<Option<Self>, TokenReport> {
-        if let Some(cmd) = Generic::parse(token, more)?.map(Command::Generic) {
+        if let Some(cmd) = Generic::parse(token, more)?.map(Statement::Generic) {
             Ok(Some(cmd))
-        } else if let Some(cmd) = ControlFlow::parse(token, more)?.map(Command::ControlFlow) {
+        } else if let Some(cmd) = ControlFlow::parse(token, more)?.map(Statement::ControlFlow) {
             Ok(Some(cmd))
-        } else if let Some(cmd) = DelVarChain::parse(token, more)?.map(Command::DelVarChain) {
+        } else if let Some(cmd) = DelVarChain::parse(token, more)?.map(Statement::DelVarChain) {
             Ok(Some(cmd))
-        } else if let Some(cmd) = ProgramName::parse(token, more)?.map(Command::ProgramInvocation) {
+        } else if let Some(cmd) = ProgramName::parse(token, more)?.map(Statement::ProgramInvocation) {
             Ok(Some(cmd))
         } else if let Some(cmd) = SetUpEditor::parse(token, more)?.map(Self::SetUpEditor) {
             Ok(Some(cmd))
@@ -61,7 +61,7 @@ impl Parse for Command {
                 let arrow_pos = more.current_position();
                 more.next();
 
-                Ok(Some(Command::Store(
+                Ok(Some(Statement::Store(
                     expr,
                     expect_some!(
                         StoreTarget::parse(next_or_err!(more)?, more)?,
@@ -73,7 +73,7 @@ impl Parse for Command {
                     .map_err(|x| x.with_label(arrow_pos, "Store arrow is here."))?,
                 )))
             } else {
-                Ok(Some(Command::Expression(expr)))
+                Ok(Some(Statement::Expression(expr)))
             }
         } else {
             Ok(None)
@@ -81,17 +81,17 @@ impl Parse for Command {
     }
 }
 
-impl Reconstruct for Command {
+impl Reconstruct for Statement {
     fn reconstruct(&self, config: &Config) -> Vec<Token> {
         let mut line = match self {
-            Command::Fiction(x) => x.reconstruct(config),
-            Command::ControlFlow(x) => x.reconstruct(config),
-            Command::Generic(x) => x.reconstruct(config),
-            Command::DelVarChain(x) => x.reconstruct(config),
-            Command::SetUpEditor(x) => x.reconstruct(config),
-            Command::Expression(x) => x.reconstruct(config),
-            Command::ProgramInvocation(x) => x.reconstruct(config),
-            Command::Store(x, target) => {
+            Statement::Fiction(x) => x.reconstruct(config),
+            Statement::ControlFlow(x) => x.reconstruct(config),
+            Statement::Generic(x) => x.reconstruct(config),
+            Statement::DelVarChain(x) => x.reconstruct(config),
+            Statement::SetUpEditor(x) => x.reconstruct(config),
+            Statement::Expression(x) => x.reconstruct(config),
+            Statement::ProgramInvocation(x) => x.reconstruct(config),
+            Statement::Store(x, target) => {
                 let mut expr = x.reconstruct(config);
                 Expression::strip_closing_parenthesis(&mut expr);
                 expr.into_iter()
@@ -99,7 +99,7 @@ impl Reconstruct for Command {
                     .chain(target.reconstruct(config))
                     .collect()
             }
-            Command::None => return vec![],
+            Statement::None => return vec![],
         };
 
         Expression::strip_closing_parenthesis(&mut line);
@@ -115,11 +115,11 @@ mod tests {
 
     #[test]
     fn store() {
-        let mut tokens = load_test_data("/snippets/parsing/commands/store.txt");
+        let mut tokens = load_test_data("/snippets/parsing/statements/store.txt");
 
-        let cmd = Command::parse(tokens.next().unwrap(), &mut tokens)
+        let cmd = Statement::parse(tokens.next().unwrap(), &mut tokens)
             .unwrap()
             .unwrap();
-        assert!(matches!(cmd, Command::Store(_, _)));
+        assert!(matches!(cmd, Statement::Store(_, _)));
     }
 }

@@ -5,9 +5,9 @@
 //! As a micro-optimization, we choose letters before numbers because letters seem to be faster by a
 //! handful of CC's (perhaps they're checked first?).
 
-use crate::parse::commands::control_flow::Menu;
+use crate::parse::statements::control_flow::Menu;
 use crate::parse::{
-    commands::{Command, ControlFlow, LabelName},
+    statements::{Statement, ControlFlow, LabelName},
     Program,
 };
 use itertools::Itertools;
@@ -78,11 +78,11 @@ impl Program {
         let label_usages = self.label_usages();
 
         for (line_idx, line) in self.lines.iter_mut().enumerate() {
-            if let Command::ControlFlow(ControlFlow::Lbl(decl_label)) = line {
+            if let Statement::ControlFlow(ControlFlow::Lbl(decl_label)) = line {
                 if !label_usages.contains_key(decl_label)
                     || label_declarations[decl_label] != line_idx
                 {
-                    *line = Command::None;
+                    *line = Statement::None;
                 }
             }
         }
@@ -97,7 +97,7 @@ impl Program {
             let new_name = label_name(rank);
 
             if let Some(&declaration_line) = label_declarations.get(label) {
-                if let Some(Command::ControlFlow(ControlFlow::Lbl(decl_label))) =
+                if let Some(Statement::ControlFlow(ControlFlow::Lbl(decl_label))) =
                     &mut self.lines.get_mut(declaration_line)
                 {
                     *decl_label = new_name;
@@ -115,11 +115,11 @@ impl Program {
                 }
 
                 match &mut self.lines.get_mut(usage) {
-                    Some(Command::ControlFlow(ControlFlow::Goto(usage_label))) => {
+                    Some(Statement::ControlFlow(ControlFlow::Goto(usage_label))) => {
                         *usage_label = new_name;
                     }
 
-                    Some(Command::ControlFlow(ControlFlow::Menu(Menu {
+                    Some(Statement::ControlFlow(ControlFlow::Menu(Menu {
                         option_labels, ..
                     }))) => {
                         for used_label in option_labels {

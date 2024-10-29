@@ -3,7 +3,7 @@
 //! This module provides [`Program::block_failure_paths`], [`Program::simple_failure_paths`], and [`Program::failure_paths`].
 
 use crate::parse::{
-    commands::{Command, ControlFlow, DelVarChain},
+    statements::{Statement, ControlFlow, DelVarChain},
     Program,
 };
 use std::collections::BTreeMap;
@@ -51,19 +51,19 @@ impl Program {
 
         // rustfmt butchers this and makes it much harder to read imo
         // todo: consider manually reformatting and telling rustfmt to ignore this block.
-        while let Some((idx, mut command)) = lines.next() {
-            let is_delvar_valence = if let Command::DelVarChain(DelVarChain {
-                valence: Some(valence_command),
+        while let Some((idx, mut statement)) = lines.next() {
+            let is_delvar_valence = if let Statement::DelVarChain(DelVarChain {
+                valence: Some(valence_statement),
                 ..
-            }) = command
+            }) = statement
             {
-                command = valence_command;
+                statement = valence_statement;
                 true
             } else {
                 false
             };
 
-            if let Command::ControlFlow(cf) = command {
+            if let Statement::ControlFlow(cf) = statement {
                 match cf {
                     ControlFlow::While(_) | ControlFlow::For(_) => stack.push(Branch {
                         kind: BranchKind::SkippableLoop,
@@ -80,7 +80,7 @@ impl Program {
                     }
 
                     ControlFlow::If(_) => match lines.peek() {
-                        Some((_, Command::ControlFlow(ControlFlow::Then))) => stack.push(Branch {
+                        Some((_, Statement::ControlFlow(ControlFlow::Then))) => stack.push(Branch {
                             kind: BranchKind::IfThen,
                             idx,
                             is_delvar_valence,
@@ -172,19 +172,19 @@ impl Program {
         let mut lines = self.lines.iter().enumerate().peekable();
         let mut output: BTreeMap<usize, usize> = BTreeMap::new();
 
-        while let Some((idx, mut command)) = lines.next() {
-            if let Command::DelVarChain(DelVarChain {
+        while let Some((idx, mut statement)) = lines.next() {
+            if let Statement::DelVarChain(DelVarChain {
                 valence: Some(valence_cmd),
                 ..
-            }) = command
+            }) = statement
             {
-                command = valence_cmd;
+                statement = valence_cmd;
             }
 
-            if let Command::ControlFlow(cf) = command {
+            if let Statement::ControlFlow(cf) = statement {
                 match cf {
                     ControlFlow::If(_) => match lines.peek() {
-                        Some((_, Command::ControlFlow(ControlFlow::Then))) => {}
+                        Some((_, Statement::ControlFlow(ControlFlow::Then))) => {}
                         Some(_) => {
                             output.insert(idx, idx + 2);
 
