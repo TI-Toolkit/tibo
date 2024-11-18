@@ -55,10 +55,8 @@ pub trait Visualize<T: Sized> {
 
 pub trait Graphviz {
     fn graphviz(&self, writer: &mut DotWriter);
-}
 
-impl Debug for dyn Graphviz {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn dbg(&self) {
         let mut output_bytes = Vec::new();
         {
             let mut writer = DotWriter::from(&mut output_bytes);
@@ -66,7 +64,7 @@ impl Debug for dyn Graphviz {
             self.graphviz(&mut writer);
         }
 
-        f.write_str(&String::from_utf8(output_bytes).unwrap())
+        print!("{}", String::from_utf8(output_bytes).unwrap())
     }
 }
 
