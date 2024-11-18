@@ -3,6 +3,9 @@
 //! Map from non-overlapping half-open `[begin, end)` subsets of a range to arbitrary
 //! data. The subsets must cover the entire set.
 
+/// Map from non-overlapping half-open `[begin, end)` subsets of a range to arbitrary
+/// data. The subsets must cover the entire set.
+#[derive(Debug)]
 pub struct PartitionMap<K: Ord + Sized, V: Sized> {
     pub breaks: Vec<K>,
     pub values: Vec<V>,

@@ -4,4 +4,4 @@ pub mod graphviz;
 
 pub mod graph_like;
 
-pub mod partition_map;
+pub mod intervals;
