@@ -2,11 +2,14 @@
 //!
 //! This module provides [`Program::block_failure_paths`], [`Program::simple_failure_paths`], and [`Program::failure_paths`].
 
-use crate::parse::{
-    statements::{Statement, ControlFlow, DelVarChain},
-    Program,
+use crate::{
+    data::intervals::IntervalTree,
+    parse::{
+        statements::{ControlFlow, DelVarChain, Statement},
+        Program,
+    },
 };
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 /// Extremely simplified model of TI-BASIC control flow (only what is necessary for this code to work)
 #[doc(hidden)]
@@ -14,7 +17,7 @@ use std::collections::BTreeMap;
 struct Branch {
     kind: BranchKind,
     idx: usize,
-    is_delvar_valence: bool,
+    delvar_valence: bool,
 }
 
 #[doc(hidden)]
@@ -38,10 +41,15 @@ impl Program {
     /// Returns a [`BTreeMap`] mapping the line of the source statement to the line *after* the
     /// `End`/`Else` that was found. Blocks without `End`s continue to the end of the program;
     /// their source statements map to the line after the last line of the input program.
+    /// Also returns a [`BTreeSet`] with all of the block conditionals without Ends.
     ///
     /// Most of the logic here is explored in <https://www.cemetech.net/forum/viewtopic.php?p=307835>
     /// and <https://www.cemetech.net/forum/viewtopic.php?p=307861>
-    pub fn block_failure_paths(&self) -> BTreeMap<usize, usize> {
+    #[rustfmt::skip]
+    pub fn block_failure_paths(&self) -> (BTreeMap<usize, usize>, BTreeSet<usize>) {
+        use Statement as Stmt;
+        use ControlFlow as CF;
+
         let program_end_idx = self.lines.len();
 
         let mut lines = self.lines.iter().enumerate().peekable();
@@ -49,13 +57,8 @@ impl Program {
 
         let mut stack = vec![];
 
-        // rustfmt butchers this and makes it much harder to read imo
-        // todo: consider manually reformatting and telling rustfmt to ignore this block.
         while let Some((idx, mut statement)) = lines.next() {
-            let is_delvar_valence = if let Statement::DelVarChain(DelVarChain {
-                valence: Some(valence_statement),
-                ..
-            }) = statement
+            let delvar_valence = if let Stmt::DelVarChain(DelVarChain { valence: Some(valence_statement), .. }) = statement
             {
                 statement = valence_statement;
                 true
@@ -65,44 +68,40 @@ impl Program {
 
             if let Statement::ControlFlow(cf) = statement {
                 match cf {
-                    ControlFlow::While(_) | ControlFlow::For(_) => stack.push(Branch {
+                    CF::While(_) | CF::For(_) => stack.push(Branch {
                         kind: BranchKind::SkippableLoop,
                         idx,
-                        is_delvar_valence,
+                        delvar_valence,
                     }),
 
-                    ControlFlow::Repeat(_) => {
+                    CF::Repeat(_) => {
                         stack.push(Branch {
                             kind: BranchKind::UnskippableLoop,
                             idx,
-                            is_delvar_valence,
+                            delvar_valence,
                         });
                     }
 
-                    ControlFlow::If(_) => match lines.peek() {
-                        Some((_, Statement::ControlFlow(ControlFlow::Then))) => stack.push(Branch {
+                    CF::If(_) => match lines.peek() {
+                        Some((_, Stmt::ControlFlow(CF::Then))) => stack.push(Branch {
                             kind: BranchKind::IfThen,
                             idx,
-                            is_delvar_valence,
+                            delvar_valence,
                         }),
                         Some(_) => {}
                         None => panic!("Expected If statement body"), // todo: make an error?
                     },
 
-                    ControlFlow::Else => {
+                    CF::Else => {
                         let has_if_then = if let Some((
                             if_then_stack_idx,
-                            Branch {
-                                kind: BranchKind::IfThen,
-                                idx: line_idx,
-                                ..
-                            },
+                            Branch { kind: BranchKind::IfThen, idx: line_idx, .. },
                         )) = stack
                             .iter()
-                            .rposition(|x| !x.is_delvar_valence)
+                            .rposition(|x| !x.delvar_valence)
                             .map(|idx| (idx, stack.get(idx).unwrap()))
                         {
-                            if !is_delvar_valence {
+                            if !delvar_valence {
                                 output.insert(*line_idx, idx + 1);
                                 stack.remove(if_then_stack_idx);
                             }
@@ -117,31 +116,19 @@ impl Program {
                         stack.push(Branch {
                             kind: BranchKind::Else { has_if_then },
                             idx,
-                            is_delvar_valence,
+                            delvar_valence,
                         })
                     }
 
-                    ControlFlow::End => {
+                    CF::End => {
                         while let Some(branch) = stack.pop() {
                             match branch {
-                                Branch {
-                                    is_delvar_valence: true,
-                                    idx: line_idx,
-                                    ..
-                                }
-                                | Branch {
-                                    kind: BranchKind::Else { has_if_then: false },
-                                    idx: line_idx,
-                                    ..
-                                } => {
+                                Branch { delvar_valence: true, idx: line_idx, .. } |
+                                Branch { kind: BranchKind::Else { has_if_then: false }, idx: line_idx, .. } => {
                                     output.insert(line_idx, idx + 1);
                                 }
 
-                                Branch {
-                                    kind: _,
-                                    idx: line_idx,
-                                    ..
-                                } => {
+                                Branch { idx: line_idx, .. } => {
                                     output.insert(line_idx, idx + 1);
 
                                     break;
@@ -155,11 +142,13 @@ impl Program {
             }
         }
 
+        let mut eof_abusers = BTreeSet::new();
         for branch in stack {
             output.insert(branch.idx, program_end_idx);
+            eof_abusers.insert(branch.idx);
         }
 
-        output
+        (output, eof_abusers)
     }
 
     /// Conditionals like `Is>(`, `Ds<(`, and `If` without a `Then` skip a single line.
@@ -174,11 +163,11 @@ impl Program {
 
         while let Some((idx, mut statement)) = lines.next() {
             if let Statement::DelVarChain(DelVarChain {
-                valence: Some(valence_cmd),
+                valence: Some(valence_stmt),
                 ..
             }) = statement
             {
-                statement = valence_cmd;
+                statement = valence_stmt;
             }
 
             if let Statement::ControlFlow(cf) = statement {
@@ -213,7 +202,7 @@ impl Program {
     /// Union of [`Program::simple_failure_paths`] and [`Program::block_failure_paths`].
     pub fn failure_paths(&self) -> BTreeMap<usize, usize> {
         let mut all = self.simple_failure_paths();
-        all.append(&mut self.block_failure_paths());
+        all.append(&mut self.block_failure_paths().0);
 
         all
     }
