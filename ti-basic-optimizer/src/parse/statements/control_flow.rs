@@ -10,6 +10,9 @@ use crate::Config;
 use std::iter::once;
 use titokens::{Token, Tokens};
 
+/// Pseudo-label for the start of the program.
+pub const START_LABEL: LabelName = LabelName::new_unchecked('s' as u8, Some('t' as u8));
+
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub struct LabelName(u16);
 #[macro_export]
@@ -64,7 +67,17 @@ impl LabelName {
         LabelName((first as u16) << 8 | second.unwrap_or(0) as u16)
     }
 
-    #[cfg(test)]
+    const fn new_unchecked(first: u8, second: Option<u8>) -> Self {
+        LabelName(
+            (first as u16) << 8
+                | match second {
+                    Some(x) => x as u16,
+                    None => 0,
+                },
+        )
+    }
+
+    #[cfg(any(test, feature = "debug-tools"))]
     pub(crate) fn internal_id(&self) -> u16 {
         self.0
     }
