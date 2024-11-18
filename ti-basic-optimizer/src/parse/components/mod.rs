@@ -161,3 +161,15 @@ impl Reconstruct for Operand {
         }
     }
 }
+
+impl From<NumericVarName> for Operand {
+    fn from(value: NumericVarName) -> Self {
+        Operand::NumericVarName(value)
+    }
+}
+
+impl From<tifloats::Float> for Operand {
+    fn from(value: tifloats::Float) -> Self {
+        Operand::NumericLiteral(value)
+    }
+}

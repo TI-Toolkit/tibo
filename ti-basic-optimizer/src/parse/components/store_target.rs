@@ -112,3 +112,9 @@ impl Reconstruct for StoreTarget {
         }
     }
 }
+
+impl From<NumericVarName> for StoreTarget {
+    fn from(value: NumericVarName) -> Self {
+        StoreTarget::NumericVar(value)
+    }
+}

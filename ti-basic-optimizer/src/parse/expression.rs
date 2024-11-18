@@ -288,6 +288,12 @@ impl Reconstruct for Expression {
     }
 }
 
+impl<T: Into<Operand>> From<T> for Box<Expression> {
+    fn from(value: T) -> Self {
+        Box::new(Expression::Operand(value.into()))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
