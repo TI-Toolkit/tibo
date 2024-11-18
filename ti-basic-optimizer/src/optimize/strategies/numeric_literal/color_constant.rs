@@ -27,6 +27,7 @@ impl Strategy<Float> for ColorConstant {
         (self.version >= *titokens::version::EARLIEST_COLOR)
             && (tifloat!(0x0010000000000000 * 10 ^ 1)..=tifloat!(0x0024000000000000 * 10 ^ 1))
                 .contains(&self.item)
+            && self.item.significant_figures().len() <= 2
     }
 
     fn size_cost(&self) -> Option<usize> {
