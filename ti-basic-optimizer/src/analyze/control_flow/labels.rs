@@ -1,9 +1,9 @@
 use std::collections::BTreeMap;
 
-use crate::data::partition_map::PartitionMap;
-use crate::parse::statements::{control_flow::Menu, ControlFlow};
+use crate::data::intervals::PartitionMap;
+use crate::parse::statements::control_flow::START_LABEL;
 use crate::parse::{
-    statements::{Statement, LabelName},
+    statements::{control_flow::Menu, ControlFlow, LabelName, Statement},
     Program,
 };
 
@@ -22,11 +22,20 @@ impl Program {
     }
 
     pub fn line_to_label_map(&self) -> PartitionMap<usize, LabelName> {
-        let mut declarations = self.label_declarations().into_iter().collect::<Vec<_>>();
-        
+        let mut declarations = self
+            .label_declarations()
+            .into_iter()
+            .map(|(a, b)| {
+                (a, b + 1) // map to line after label definition
+            })
+            .collect::<Vec<_>>();
+
         declarations.sort_by_key(|entry| entry.1);
 
-        let (names, begins): (Vec<LabelName>, Vec<usize>) = declarations.into_iter().unzip();
+        let (mut names, mut begins): (Vec<LabelName>, Vec<usize>) =
+            declarations.into_iter().unzip();
+        names.insert(0, START_LABEL);
+        begins.insert(0, 0);
 
         PartitionMap::new(begins, names)
     }
@@ -101,10 +110,11 @@ mod tests {
 
         let map = test_program.line_to_label_map();
 
-        assert_eq!(map.find(&0), Some(&label_name!('R' 'E')));
+        assert_eq!(map.find(&0), Some(&START_LABEL));
         assert_eq!(map.find(&1), Some(&label_name!('R' 'E')));
-        assert_eq!(map.find(&2), Some(&label_name!('P' 'L')));
+        assert_eq!(map.find(&2), Some(&label_name!('R' 'E')));
         assert_eq!(map.find(&3), Some(&label_name!('P' 'L')));
-        assert_eq!(map.find(&4), Some(&label_name!('0')));
+        assert_eq!(map.find(&4), Some(&label_name!('P' 'L')));
+        assert_eq!(map.find(&5), Some(&label_name!('0')));
     }
 }
