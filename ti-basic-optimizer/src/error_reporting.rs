@@ -221,6 +221,8 @@ pub struct LineReport {
     location: usize,
     message: String,
     suggestion: Option<String>,
+
+    code: Option<u16>,
 }
 
 impl LineReport {
@@ -230,7 +232,16 @@ impl LineReport {
             location,
             message: message.to_string(),
             suggestion: suggestion.map(|x| x.to_string()),
+
+            code: None,
         }
+    }
+
+    /// Provide an error code for this error.
+    pub fn with_code(mut self, error_code: u16) -> Self {
+        self.code = Some(error_code);
+
+        self
     }
 }
 
@@ -271,6 +282,10 @@ impl Report for LineReport {
 
         if let Some(suggestion) = self.suggestion {
             builder = builder.with_help(suggestion);
+        }
+
+        if let Some(code) = self.code {
+            builder = builder.with_code(code);
         }
 
         builder.finish()
