@@ -126,7 +126,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn cant_have_two_refmut_to_same_block() {
+    fn deny_double_refmut() {
         struct Node(u8);
 
         let mut g = Digraph::new();
