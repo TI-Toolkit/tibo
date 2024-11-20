@@ -38,7 +38,22 @@ impl Statement {
     pub fn promote(statement: Self) -> Option<Self> {
         match statement {
             Statement::Fiction(boxed_statement) => Some(*boxed_statement),
-            _ => None
+            _ => None,
+        }
+    }
+
+    pub fn is_control_flow(&self) -> bool {
+        matches!(self.root(), Some(Statement::ControlFlow(_)))
+    }
+
+    pub fn root(&self) -> Option<&Self> {
+        match self {
+            Statement::None => None,
+            Statement::DelVarChain(del_var_chain) => {
+                del_var_chain.valence.as_ref().and_then(|stmt| stmt.root())
+            }
+            Statement::Fiction(statement) => statement.root(),
+            _ => Some(self),
         }
     }
 }
@@ -52,7 +67,8 @@ impl Parse for Statement {
             Ok(Some(cmd))
         } else if let Some(cmd) = DelVarChain::parse(token, more)?.map(Statement::DelVarChain) {
             Ok(Some(cmd))
-        } else if let Some(cmd) = ProgramName::parse(token, more)?.map(Statement::ProgramInvocation) {
+        } else if let Some(cmd) = ProgramName::parse(token, more)?.map(Statement::ProgramInvocation)
+        {
             Ok(Some(cmd))
         } else if let Some(cmd) = SetUpEditor::parse(token, more)?.map(Self::SetUpEditor) {
             Ok(Some(cmd))

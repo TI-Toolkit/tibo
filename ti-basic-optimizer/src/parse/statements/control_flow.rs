@@ -81,6 +81,15 @@ impl LabelName {
     pub(crate) fn internal_id(&self) -> u16 {
         self.0
     }
+
+    fn tokens(&self) -> Vec<Token> {
+        let mut data = vec![Token::OneByte((self.0 >> 8) as u8)];
+        if self.0 & 0xFF != 0 {
+            data.push(Token::OneByte((self.0 & 0xFF) as u8));
+        }
+
+        data
+    }
 }
 
 impl Parse for LabelName {
@@ -104,12 +113,7 @@ impl Parse for LabelName {
 
 impl Reconstruct for LabelName {
     fn reconstruct(&self, _config: &Config) -> Vec<Token> {
-        let mut data = vec![Token::OneByte((self.0 >> 8) as u8)];
-        if self.0 & 0xFF != 0 {
-            data.push(Token::OneByte((self.0 & 0xFF) as u8));
-        }
-
-        data
+        self.tokens()
     }
 }
 

@@ -1,5 +1,7 @@
 use crate::error_reporting::{expect_some, expect_tok, next_or_err, TokenReport};
-use crate::parse::{statements::control_flow::LabelName, expression::Expression, Parse, Reconstruct};
+use crate::parse::{
+    expression::Expression, statements::control_flow::LabelName, Parse, Reconstruct,
+};
 use crate::Config;
 use std::iter::once;
 use titokens::{Token, Tokens};

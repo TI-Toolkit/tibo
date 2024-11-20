@@ -1,5 +1,5 @@
 use crate::error_reporting::{next_or_err, TokenReport};
-use crate::parse::{statements::Statement, components::DelVarTarget, Parse, Reconstruct};
+use crate::parse::{components::DelVarTarget, statements::Statement, Parse, Reconstruct};
 use crate::Config;
 use std::iter::once;
 use titokens::{Token, Tokens};
