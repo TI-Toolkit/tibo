@@ -82,15 +82,11 @@ impl Program {
                         });
                     }
 
-                    CF::If(_) => match lines.peek() {
-                        Some((_, Stmt::ControlFlow(CF::Then))) => stack.push(Branch {
+                    CF::IfThen(_) => stack.push(Branch {
                             kind: BranchKind::IfThen,
                             idx,
                             delvar_valence,
                         }),
-                        Some(_) => {}
-                        None => panic!("Expected If statement body"), // todo: make an error?
-                    },
 
                     CF::Else => {
                         let has_if_then = if let Some((
@@ -173,7 +169,6 @@ impl Program {
             if let Statement::ControlFlow(cf) = statement {
                 match cf {
                     ControlFlow::If(_) => match lines.peek() {
-                        Some((_, Statement::ControlFlow(ControlFlow::Then))) => {}
                         Some(_) => {
                             output.insert(idx, idx + 2);
 
@@ -225,9 +220,9 @@ mod tests {
 
         assert_eq!(
             failure_paths.keys().collect::<Vec<_>>(),
-            vec![&0, &1, &5, &7]
+            vec![&0, &1, &4, &6]
         );
-        assert_eq!(failure_paths.values().collect_vec(), vec![&10, &5, &9, &9]);
+        assert_eq!(failure_paths.values().collect_vec(), vec![&9, &4, &8, &8]);
     }
 
     #[test]
@@ -240,11 +235,11 @@ mod tests {
 
         assert_eq!(
             *failure_paths.keys().collect_vec(),
-            vec![&0, &3, &5, &7, &10, &12, &14, &16]
+            vec![&0, &2, &4, &6, &9, &11, &13, &14]
         );
         assert_eq!(
             *failure_paths.values().collect_vec(),
-            vec![&9, &9, &9, &9, &12, &14, &19, &19]
+            vec![&8, &8, &8, &8, &11, &13, &17, &17]
         );
     }
 }

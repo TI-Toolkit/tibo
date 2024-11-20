@@ -116,6 +116,7 @@ impl Reconstruct for LabelName {
 #[derive(Clone, Debug)]
 pub enum ControlFlow {
     If(Expression),
+    IfThen(Expression),
     Then,
     Else,
     While(Expression),
@@ -162,6 +163,7 @@ impl Reconstruct for ControlFlow {
     fn reconstruct(&self, version: &Config) -> Vec<Token> {
         match self {
             ControlFlow::If(cond) => once(Token::OneByte(0xCE)).chain(cond.reconstruct(version)).collect(),
+            ControlFlow::IfThen(cond) => once(Token::OneByte(0xCE)).chain(cond.reconstruct(version)).chain(vec![Token::OneByte(0x3F), Token::OneByte(0xCF)]).collect(),
             ControlFlow::Then => vec![Token::OneByte(0xCF)],
             ControlFlow::Else => vec![Token::OneByte(0xD0)],
             ControlFlow::While(cond) => once(Token::OneByte(0xD1)).chain(cond.reconstruct(version)).collect(),

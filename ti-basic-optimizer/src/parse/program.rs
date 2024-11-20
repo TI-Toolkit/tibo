@@ -1,7 +1,7 @@
 use itertools::Itertools;
 
 use crate::error_reporting::{Report, TokenReport};
-use crate::parse::statements::Statement;
+use crate::parse::statements::{ControlFlow, Statement};
 use crate::parse::{Parse, Reconstruct};
 use crate::Config;
 use titokens::{Token, Tokenizer, Tokens, Version};
@@ -53,7 +53,7 @@ impl Program {
     }
 
     fn parse(tokens: &mut Tokens) -> Result<Program, TokenReport> {
-        let mut lines = vec![];
+        let mut lines: Vec<Statement> = vec![];
 
         let mut line_number = 1;
         while let Some(next) = tokens.next() {
@@ -67,6 +67,20 @@ impl Program {
             }
 
             if let Some(statement) = Statement::parse(next, tokens)? {
+                // coalesce if-then into IfThen (we can't do this in `ControlFlow::parse` because it would break our line counter)
+                if let Statement::ControlFlow(ControlFlow::Then) = statement {
+                    if let Some(Statement::ControlFlow(ControlFlow::If(cond))) = lines.pop() {
+                        lines.push(Statement::ControlFlow(ControlFlow::IfThen(cond.clone())));
+                        continue;
+                    } else {
+                        Err(TokenReport::new(
+                            tokens.current_position() - 1,
+                            "Illegal Then",
+                            Some("Add an If Statement before the Then to form an If-Then"),
+                        ))?
+                    }
+                }
+
                 lines.push(statement);
             }
 
