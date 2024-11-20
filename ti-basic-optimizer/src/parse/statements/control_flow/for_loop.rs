@@ -1,8 +1,10 @@
 use crate::error_reporting::{expect_some, expect_tok, next_or_err, TokenReport};
+use crate::parse::components::Operand;
 use crate::parse::expression::Expression;
 use crate::parse::{Parse, Reconstruct};
 use crate::Config;
 use std::iter::once;
+use tifloats::{tifloat, Float};
 use titokens::{Token, Tokens};
 
 #[derive(Clone, Debug)]
@@ -95,5 +97,15 @@ impl Reconstruct for ForLoop {
                 vec![]
             })
             .collect()
+    }
+}
+
+impl ForLoop {
+    pub fn step(&self) -> Expression {
+        self.step
+            .clone()
+            .unwrap_or(Expression::Operand(Operand::NumericLiteral(tifloat!(
+                0x0010000000000000 * 10 ^ 0
+            ))))
     }
 }
