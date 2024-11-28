@@ -83,7 +83,7 @@ impl Reconstruct for ForLoop {
             .chain(once(Token::OneByte(0x2B)))
             .chain(self.start.reconstruct(config))
             .chain(once(Token::OneByte(0x2B)))
-            .chain(self.start.reconstruct(config))
+            .chain(self.end.reconstruct(config))
             .chain(if let Some(step) = &self.step {
                 once(Token::OneByte(0x2B))
                     .chain(step.reconstruct(config))
