@@ -120,11 +120,12 @@ impl<'a> Builder<'a> {
 
             if let Some(Token::OneByte(0x10)) = self.tokens.peek() {
                 // (
-                match &operand {
-                    Operand::Ans => {
-                        unimplemented!()
-                    }
-                    _ => {}
+                if let Operand::Ans = &operand {
+                    Err(TokenReport::new(
+                        self.tokens.current_position(),
+                        "Unsupported Ans( operation",
+                        None,
+                    ))?
                 }
             }
 

@@ -1,7 +1,7 @@
 use crate::error_reporting::TokenReport;
 pub use crate::parse::components::{
     binary_operator::BinOp,
-    data_access::{ListIndex, ListIndexable, MatrixIndex, MatrixIndexable},
+    data_access::{EquationIndex, ListIndex, ListIndexable, MatrixIndex, MatrixIndexable},
     delvar_target::DelVarTarget,
     equation_name::EquationName,
     function_call::FunctionCall,
@@ -73,9 +73,11 @@ pub enum Operand {
     NumericVarName(NumericVarName),
     ListName(ListName),
     MatrixName(MatrixName),
+    StringName(StringName),
+    EquationName(EquationName),
     ListAccess(ListIndex),
     MatrixAccess(MatrixIndex),
-    StringName(StringName),
+    EquationAccess(EquationIndex),
     Ans,
     I,
     GetKey,
@@ -132,6 +134,20 @@ impl Parse for Operand {
                     Ok(None)
                 }
             }
+            Token::TwoByte(0x5E, 0x10..=0x2B | 0x40..=0x45 | 0x80..=0x82) => {
+                if let Some(name) = EquationName::parse(token, more)? {
+                    if more.peek() == Some(Token::OneByte(0x10)) {
+                        Ok(
+                            EquationIndex::parse(name, more.next().unwrap(), more)?
+                                .map(Self::EquationAccess),
+                        )
+                    } else {
+                        Ok(Some(Self::EquationName(name)))
+                    }
+                } else {
+                    Ok(None)
+                }
+            }
             Token::TwoByte(0x63, 0x2A) => Ok(Some(Self::TblInput)), // todo: TblIndex(n) list access
             Token::TwoByte(0x63, 0x00..=0x2A | 0x32..=0x38) => {
                 Ok(WindowVarName::parse(token, more)?.map(Self::WindowVarName))
@@ -147,9 +163,11 @@ impl Reconstruct for Operand {
             Operand::NumericVarName(x) => x.reconstruct(config),
             Operand::ListName(x) => x.reconstruct(config),
             Operand::MatrixName(x) => x.reconstruct(config),
+            Operand::StringName(x) => x.reconstruct(config),
+            Operand::EquationName(x) => x.reconstruct(config),
             Operand::ListAccess(x) => x.reconstruct(config),
             Operand::MatrixAccess(x) => x.reconstruct(config),
-            Operand::StringName(x) => x.reconstruct(config),
+            Operand::EquationAccess(x) => x.reconstruct(config),
             Operand::Ans => vec![Token::OneByte(0x72)],
             Operand::I => vec![Token::OneByte(0x2C)],
             Operand::GetKey => vec![Token::OneByte(0xAD)],

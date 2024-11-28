@@ -7,6 +7,8 @@ use crate::parse::{
 use crate::Config;
 use titokens::{Token, Tokens};
 
+use super::EquationName;
+
 #[derive(Debug, Clone)]
 pub enum ListIndexable {
     List(ListName),
@@ -170,6 +172,51 @@ impl ListIndex {
 }
 
 impl Reconstruct for ListIndex {
+    fn reconstruct(&self, config: &Config) -> Vec<Token> {
+        let mut data = self.subject.reconstruct(config);
+        data.push(Token::OneByte(0x10));
+        data.extend(self.index.reconstruct(config));
+        data.push(Token::OneByte(0x11));
+
+        data
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct EquationIndex {
+    pub subject: EquationName,
+    pub index: Box<Expression>,
+}
+
+impl EquationIndex {
+    pub fn parse(
+        subject: EquationName,
+        token: Token,
+        more: &mut Tokens,
+    ) -> Result<Option<Self>, TokenReport> {
+        if token != Token::OneByte(0x10) {
+            return Ok(None);
+        }
+
+        let index = expect_some!(
+            Expression::parse(next_or_err!(more)?, more)?,
+            more,
+            "an expression",
+            "This is a equation invocation and equation invocations require an index."
+        )?;
+
+        if more.peek() == Some(Token::OneByte(0x11)) {
+            more.next();
+        }
+
+        Ok(Some(EquationIndex {
+            subject,
+            index: Box::new(index),
+        }))
+    }
+}
+
+impl Reconstruct for EquationIndex {
     fn reconstruct(&self, config: &Config) -> Vec<Token> {
         let mut data = self.subject.reconstruct(config);
         data.push(Token::OneByte(0x10));
