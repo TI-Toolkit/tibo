@@ -77,6 +77,7 @@ pub enum Operand {
     MatrixAccess(MatrixIndex),
     StringName(StringName),
     Ans,
+    I,
     GetKey,
     GetDate,
     StartTmr,
@@ -99,6 +100,7 @@ impl Parse for Operand {
                 Ok(NumericVarName::parse(token, more)?.map(Self::NumericVarName))
             }
             Token::OneByte(0x72) => Ok(Some(Self::Ans)),
+            Token::OneByte(0x2C) => Ok(Some(Self::I)),
             Token::OneByte(0xAD) => Ok(Some(Self::GetKey)),
             Token::TwoByte(0xEF, 0x09) => Ok(Some(Self::GetDate)),
             Token::TwoByte(0xEF, 0x0B) => Ok(Some(Self::StartTmr)),
@@ -149,6 +151,7 @@ impl Reconstruct for Operand {
             Operand::MatrixAccess(x) => x.reconstruct(config),
             Operand::StringName(x) => x.reconstruct(config),
             Operand::Ans => vec![Token::OneByte(0x72)],
+            Operand::I => vec![Token::OneByte(0x2C)],
             Operand::GetKey => vec![Token::OneByte(0xAD)],
             Operand::GetDate => vec![Token::TwoByte(0xEF, 0x09)],
             Operand::StartTmr => vec![Token::TwoByte(0xEF, 0x0B)],
