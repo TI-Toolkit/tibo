@@ -1,4 +1,4 @@
-use crate::error_reporting::TokenReport;
+use crate::error_reporting::{expect_some, next_or_err, TokenReport};
 pub use crate::parse::components::{
     binary_operator::BinOp,
     data_access::{EquationIndex, ListIndex, ListIndexable, MatrixIndex, MatrixIndexable},
@@ -102,6 +102,33 @@ impl Parse for Operand {
                 Ok(NumericVarName::parse(token, more)?.map(Self::NumericVarName))
             }
             Token::OneByte(0x72) => Ok(Some(Self::Ans)),
+            Token::OneByte(0x72) => {
+                if more.peek() == Some(Token::OneByte(0x10)) { // (
+                    more.next();
+                    // conservatively guess that this is a list or matrix access- we can maybe demote it to a muliplication later
+                    let index = expect_some!(Expression::parse(next_or_err!(more)?, more)?, more, "an expression")?;
+
+                    match more.peek() {
+                        Some(Token ::OneByte(0x2B)) => {
+                            // , -> matrix access
+                            todo!()
+                        },
+                        Some(Token::OneByte(0x11)) => {
+                            // )
+                            more.next();
+                        },
+
+                        _ => {}
+                    };
+
+                    Ok(Some(Self::ListAccess(ListIndex {
+                        subject: ListIndexable::Ans,
+                        index: Box::new(index),
+                    })))
+                } else {
+                    Ok(Some(Self::Ans))
+                }
+            },
             Token::OneByte(0x2C) => Ok(Some(Self::I)),
             Token::OneByte(0xAD) => Ok(Some(Self::GetKey)),
             Token::TwoByte(0xEF, 0x09) => Ok(Some(Self::GetDate)),
