@@ -205,6 +205,12 @@ impl Program {
             }
         }
 
+        for (statement, failure_path) in block_failure_paths.iter() {
+            if matches!(self.lines[*statement], Statement::ControlFlow(ControlFlow::IfThen(_))) && matches!(self.lines[*failure_path - 1], Statement::ControlFlow(ControlFlow::Else)) && literals.contains(&(failure_path - 1)) {
+                literals.insert(*statement);
+            }
+        }
+
         Ok(Box::new(ControlFlowLookup {
             literals,
             eof_abusers,
@@ -309,7 +315,7 @@ impl ControlFlowParser {
         cf: ControlFlow,
     ) -> Result<(), LineReport> {
         if self.cfl.literals.contains(&line_index) {
-            self.finish_subgraph(line_index + 2);
+            self.finish_subgraph(line_index + 1);
             self.cur_fragment.push_literal(cf);
 
             return Ok(());
@@ -381,18 +387,26 @@ impl ControlFlowParser {
             }
 
             ControlFlow::End => {
-                let (back_edge, flow) = self
-                    .cf_stack
-                    .pop()
-                    .expect("Internal error during CFG creation! (3)");
-
-                if !matches!(flow, Flow::Jump) {
-                    self.add_edge(self.cur_block.starting_line, back_edge);
+                if self.active_simple_conds != 0 {
+                    Err(LineReport::new(
+                        line_index,
+                        "Unsupported control flow: If-End",
+                        None,
+                    ))?
                 }
 
-                self.add_edge(self.cur_block.starting_line, line_index + 1);
+                if let Some((back_edge, flow)) = self.cf_stack.pop() {
+                    if !matches!(flow, Flow::Jump) {
+                        self.add_edge(self.cur_block.starting_line, back_edge);
+                    }
 
-                self.finish_block(flow, line_index + 1);
+                    self.add_edge(self.cur_block.starting_line, line_index + 1);
+
+                    self.finish_block(flow, line_index + 1);
+                } else {
+                    self.finish_subgraph(line_index + 1);
+                    self.cur_fragment.push_literal(cf);
+                }
             }
 
             ControlFlow::Return => {
