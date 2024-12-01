@@ -10,6 +10,7 @@ pub use crate::parse::components::{
     matrix_name::MatrixName,
     numeric_var_name::NumericVarName,
     pic_image_name::{ImageName, PicName},
+    rand::Rand,
     store_target::StoreTarget,
     string::TIString,
     string_name::StringName,
@@ -32,6 +33,7 @@ mod matrix_name;
 mod numeric_literal;
 mod numeric_var_name;
 mod pic_image_name;
+mod rand;
 mod store_target;
 mod string;
 mod string_name;
@@ -80,6 +82,7 @@ pub enum Operand {
     EquationAccess(EquationIndex),
     Ans,
     I,
+    Rand(Rand),
     GetKey,
     GetDate,
     StartTmr,
@@ -101,22 +104,26 @@ impl Parse for Operand {
             Token::OneByte(0x41..=0x5B) | Token::TwoByte(0x62, 0x21) => {
                 Ok(NumericVarName::parse(token, more)?.map(Self::NumericVarName))
             }
-            Token::OneByte(0x72) => Ok(Some(Self::Ans)),
             Token::OneByte(0x72) => {
-                if more.peek() == Some(Token::OneByte(0x10)) { // (
+                if more.peek() == Some(Token::OneByte(0x10)) {
+                    // (
                     more.next();
                     // conservatively guess that this is a list or matrix access- we can maybe demote it to a muliplication later
-                    let index = expect_some!(Expression::parse(next_or_err!(more)?, more)?, more, "an expression")?;
+                    let index = expect_some!(
+                        Expression::parse(next_or_err!(more)?, more)?,
+                        more,
+                        "an expression"
+                    )?;
 
                     match more.peek() {
-                        Some(Token ::OneByte(0x2B)) => {
+                        Some(Token::OneByte(0x2B)) => {
                             // , -> matrix access
                             todo!()
-                        },
+                        }
                         Some(Token::OneByte(0x11)) => {
                             // )
                             more.next();
-                        },
+                        }
 
                         _ => {}
                     };
@@ -128,14 +135,15 @@ impl Parse for Operand {
                 } else {
                     Ok(Some(Self::Ans))
                 }
-            },
+            }
             Token::OneByte(0x2C) => Ok(Some(Self::I)),
+            Token::OneByte(0xAB) => Ok(Rand::parse(token, more)?.map(Self::Rand)),
             Token::OneByte(0xAD) => Ok(Some(Self::GetKey)),
             Token::TwoByte(0xEF, 0x09) => Ok(Some(Self::GetDate)),
             Token::TwoByte(0xEF, 0x0B) => Ok(Some(Self::StartTmr)),
             Token::OneByte(0x2A) => Ok(TIString::parse(token, more)?.map(Self::StringLiteral)),
             Token::OneByte(0x08) => Ok(TIList::parse(token, more)?.map(Self::ListLiteral)),
-
+            Token::OneByte(0x06) => Ok(TIMatrix::parse(token, more)?.map(Self::MatrixLiteral)),
             Token::TwoByte(0xAA, _) => Ok(StringName::parse(token, more)?.map(Self::StringName)),
             Token::TwoByte(0x5C, _) => {
                 if let Some(name) = MatrixName::parse(token, more)? {
@@ -164,10 +172,8 @@ impl Parse for Operand {
             Token::TwoByte(0x5E, 0x10..=0x2B | 0x40..=0x45 | 0x80..=0x82) => {
                 if let Some(name) = EquationName::parse(token, more)? {
                     if more.peek() == Some(Token::OneByte(0x10)) {
-                        Ok(
-                            EquationIndex::parse(name, more.next().unwrap(), more)?
-                                .map(Self::EquationAccess),
-                        )
+                        Ok(EquationIndex::parse(name, more.next().unwrap(), more)?
+                            .map(Self::EquationAccess))
                     } else {
                         Ok(Some(Self::EquationName(name)))
                     }
@@ -197,6 +203,7 @@ impl Reconstruct for Operand {
             Operand::EquationAccess(x) => x.reconstruct(config),
             Operand::Ans => vec![Token::OneByte(0x72)],
             Operand::I => vec![Token::OneByte(0x2C)],
+            Operand::Rand(x) => x.reconstruct(config),
             Operand::GetKey => vec![Token::OneByte(0xAD)],
             Operand::GetDate => vec![Token::TwoByte(0xEF, 0x09)],
             Operand::StartTmr => vec![Token::TwoByte(0xEF, 0x0B)],
