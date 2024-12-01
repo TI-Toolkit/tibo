@@ -206,7 +206,14 @@ impl Program {
         }
 
         for (statement, failure_path) in block_failure_paths.iter() {
-            if matches!(self.lines[*statement], Statement::ControlFlow(ControlFlow::IfThen(_))) && matches!(self.lines[*failure_path - 1], Statement::ControlFlow(ControlFlow::Else)) && literals.contains(&(failure_path - 1)) {
+            if matches!(
+                self.lines[*statement],
+                Statement::ControlFlow(ControlFlow::IfThen(_))
+            ) && matches!(
+                self.lines[*failure_path - 1],
+                Statement::ControlFlow(ControlFlow::Else)
+            ) && literals.contains(&(failure_path - 1))
+            {
                 literals.insert(*statement);
             }
         }

@@ -7,7 +7,7 @@
 
 use crate::parse::statements::control_flow::Menu;
 use crate::parse::{
-    statements::{Statement, ControlFlow, LabelName},
+    statements::{ControlFlow, LabelName, Statement},
     Program,
 };
 use itertools::Itertools;

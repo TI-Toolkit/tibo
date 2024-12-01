@@ -45,14 +45,15 @@ impl<'a> Visualize<BasicBlockVisSettings<'a>> for BasicBlock {
 
         node.set("shape", shape, false);
 
-        let content = match self.flow {
-            Flow::Goto(label_name) => label_name.stringify(config.tokenizer),
-            _ => self
-                .lines
-                .iter()
-                .map(|statement| statement.stringify(config.tokenizer))
-                .join("\n"),
-        };
+        let content = self
+            .lines
+            .iter()
+            .map(|statement| statement.stringify(config.tokenizer))
+            .join("\n");
+
+        if let Flow::Goto(label_name) = self.flow {
+            node.set("xlabel", &label_name.stringify(config.tokenizer), false);
+        }
 
         node.set_label(&escape(&content).replace(
             "\\n",
@@ -193,7 +194,13 @@ impl<'a> Visualize<CFGVisSettings<'a>> for LabelFragment {
                     .set_label(&self.name.stringify(config.tokenizer));
             }
 
-            segment.visualize(&mut inner_context, CFGVisSettings { tokenizer: config.tokenizer, namespace: namespace.clone() });
+            segment.visualize(
+                &mut inner_context,
+                CFGVisSettings {
+                    tokenizer: config.tokenizer,
+                    namespace: namespace.clone(),
+                },
+            );
 
             last_namespace = namespace;
         }

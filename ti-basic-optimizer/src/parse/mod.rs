@@ -1,10 +1,10 @@
 use itertools::Itertools;
 use titokens::{Token, Tokens};
 
-pub mod statements;
 pub mod components;
 pub mod expression;
 mod program;
+pub mod statements;
 
 pub use program::Program;
 

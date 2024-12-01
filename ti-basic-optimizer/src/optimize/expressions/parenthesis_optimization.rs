@@ -5,8 +5,8 @@
 use std::mem;
 use titokens::Token;
 
-use crate::parse::statements::{Statement, ControlFlow, Generic};
-use crate::parse::components::{ListIndex, MatrixIndex, StoreTarget};
+use crate::parse::components::{EquationIndex, ListIndex, MatrixIndex, Rand, StoreTarget};
+use crate::parse::statements::{ControlFlow, Generic, Statement};
 use crate::parse::{
     components::{Operand, Operator},
     expression::Expression,
@@ -96,13 +96,12 @@ impl Expression {
                 }
             }
 
-            Expression::Operand(Operand::ListAccess(ListIndex { index, .. })) => {
-                1 + index.optimize_parentheses()
-            }
-
-            Expression::Operand(Operand::MatrixAccess(MatrixIndex { col, .. })) => {
-                1 + col.optimize_parentheses()
-            }
+            Expression::Operand(
+                Operand::ListAccess(ListIndex { index, .. })
+                | Operand::MatrixAccess(MatrixIndex { col: index, .. })
+                | Operand::EquationAccess(EquationIndex { index, .. })
+                | Operand::Rand(Rand { count: Some(index) }),
+            ) => 1 + index.optimize_parentheses(),
 
             Expression::Operand(Operand::StringLiteral(_) | Operand::ListLiteral(_)) => 1,
 
@@ -196,11 +195,11 @@ impl Statement {
                         index.col.optimize_parentheses();
                     }
 
-                    _ => { /* no closing parentheses possible */ }
+                    _ => { /* no closing parentheses savings possible */ }
                 }
             }
 
-            _ => { /* no closing parentheses possible */ }
+            _ => { /* no closing parentheses savings possible */ }
         }
     }
 }

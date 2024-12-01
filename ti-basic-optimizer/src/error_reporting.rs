@@ -1,6 +1,7 @@
 use std::ops::Range;
 use titokens::tokenizer::TokenBoundaries;
 
+/// Grab the next token, or throw a generic "end of input" error.
 macro_rules! next_or_err {
     ($tokens: ident) => {
         $tokens.next().ok_or_else(|| {
