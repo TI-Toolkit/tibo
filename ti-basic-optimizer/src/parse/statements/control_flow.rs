@@ -165,9 +165,9 @@ impl Parse for ControlFlow {
 impl Reconstruct for ControlFlow {
     #[rustfmt::skip]
     fn reconstruct(&self, version: &Config) -> Vec<Token> {
-        match self {
+        let mut tokens = match self {
             ControlFlow::If(cond) => once(Token::OneByte(0xCE)).chain(cond.reconstruct(version)).collect(),
-            ControlFlow::IfThen(cond) => once(Token::OneByte(0xCE)).chain(cond.reconstruct(version)).chain(vec![Token::OneByte(0x3F), Token::OneByte(0xCF)]).collect(),
+            ControlFlow::IfThen(cond) => once(Token::OneByte(0xCE)).chain(cond.reconstruct(version)).collect(),
             ControlFlow::Then => vec![Token::OneByte(0xCF)],
             ControlFlow::Else => vec![Token::OneByte(0xD0)],
             ControlFlow::While(cond) => once(Token::OneByte(0xD1)).chain(cond.reconstruct(version)).collect(),
@@ -181,6 +181,13 @@ impl Reconstruct for ControlFlow {
             ControlFlow::IsGt(isds) => once(Token::OneByte(0xDA)).chain(isds.reconstruct(version)).collect(),
             ControlFlow::DsLt(isds) => once(Token::OneByte(0xDB)).chain(isds.reconstruct(version)).collect(),
             ControlFlow::Menu(menu) => menu.reconstruct(version),
+        };
+
+        Expression::strip_closing_parenthesis(&mut tokens);
+        if matches!(self, ControlFlow::IfThen(_)) {
+            tokens.extend(vec![Token::OneByte(0x3F), Token::OneByte(0xCF)]);
         }
+
+        tokens
     }
 }
