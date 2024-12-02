@@ -20,7 +20,7 @@ impl Parse for SetUpEditor {
         let statement_position = more.current_position();
 
         let mut lists = vec![];
-        if matches!(more.peek(), Some(Token::OneByte(0x3E | 0x3F)) | None) {
+        if !matches!(more.peek(), Some(Token::OneByte(0x3E | 0x3F)) | None) {
             while let Some(next) = more.next() {
                 if let Some(name) = ListName::parse(next, more)? {
                     lists.push(name);

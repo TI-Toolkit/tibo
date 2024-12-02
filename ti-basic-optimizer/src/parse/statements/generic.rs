@@ -179,7 +179,6 @@ impl Generic {
             | 0xBB47 // TwoSampFTest
             | 0xBB48 // TInterval
             | 0xBB49 // TwoSampTInt
-            | 0xBB4A // SetUpEditor
             | 0xBB4B // PmtEnd
             | 0xBB4C // PmtBgn
             | 0xBB4D // Real
