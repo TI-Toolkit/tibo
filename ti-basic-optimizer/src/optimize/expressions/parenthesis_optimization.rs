@@ -163,6 +163,7 @@ impl Statement {
             Statement::ControlFlow(control_flow) => {
                 match control_flow {
                     ControlFlow::If(expr)
+                    | ControlFlow::IfThen(expr)
                     | ControlFlow::While(expr)
                     | ControlFlow::Repeat(expr) => {
                         expr.optimize_parentheses();
