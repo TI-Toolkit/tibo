@@ -6,7 +6,7 @@ use std::mem;
 use titokens::Token;
 
 use crate::parse::components::{EquationIndex, ListIndex, MatrixIndex, Rand, StoreTarget};
-use crate::parse::statements::{ControlFlow, Generic, Statement};
+use crate::parse::statements::{ControlFlow, DelVarChain, Generic, Statement};
 use crate::parse::{
     components::{Operand, Operator},
     expression::Expression,
@@ -54,7 +54,7 @@ impl Expression {
 
                     if let Expression::Operator(Operator::Binary(left_binop)) = binop.left.as_ref()
                     {
-                        if binop.precedence() >= left_binop.precedence() {
+                        if binop.precedence() > left_binop.precedence() {
                             left += 1;
                         }
                     }
@@ -154,6 +154,13 @@ impl Expression {
 impl Statement {
     pub fn optimize_parentheses(&mut self) {
         match self {
+            Statement::DelVarChain(DelVarChain {
+                valence: Some(statement),
+                ..
+            }) => {
+                statement.optimize_parentheses();
+            }
+
             Statement::Generic(Generic { arguments, .. }) => {
                 if let Some(last) = arguments.last_mut() {
                     last.optimize_parentheses();
@@ -213,7 +220,7 @@ mod tests {
 
     #[test]
     fn parenthesis_optimization() {
-        let cases = [("1.txt", 3), ("2.txt", 1)];
+        let cases = [("1.txt", 3), ("2.txt", 1), ("3.txt", 1), ("4.txt", 2)];
         for (case_name, expected_savings) in cases {
             let mut tokens = load_test_data(
                 &("/snippets/optimize/parentheses/maximization/".to_string() + case_name),
