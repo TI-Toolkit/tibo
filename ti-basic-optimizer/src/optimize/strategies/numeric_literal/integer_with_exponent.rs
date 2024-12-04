@@ -70,14 +70,16 @@ impl Strategy<Float> for IntegerWithExponent {
 
     fn size_cost(&self) -> Option<usize> {
         self.exists().then(|| {
-            self.original.significant_figures().len()
-                + 1
-                + match self.original.exponent() - self.adjusted.exponent() {
-                    0..=9 => 1,
-                    -9..=-1 | 10..=99 => 2,
-                    -99..=-10 => 3,
-                    _ => unreachable!(),
-                }
+            1 + if self.original.significant_figures() == vec![1] {
+                0
+            } else {
+                self.original.significant_figures().len()
+            } + match self.original.exponent() - self.adjusted.exponent() {
+                0..=9 => 1,
+                -9..=-1 | 10..=99 => 2,
+                -99..=-10 => 3,
+                _ => unreachable!(),
+            }
         })
     }
 
@@ -93,7 +95,11 @@ impl Strategy<Float> for IntegerWithExponent {
 
 impl Reconstruct for IntegerWithExponent {
     fn reconstruct(&self, config: &Config) -> Vec<Token> {
-        let mut result = WriteDigits::new(self.adjusted).reconstruct(config);
+        let mut result = if self.original.significant_figures() == vec![1] {
+            vec![]
+        } else {
+            WriteDigits::new(self.adjusted).reconstruct(config)
+        };
         result.push(Token::OneByte(0x3B));
 
         let mut exponent = self.original.exponent() - self.adjusted.exponent();
