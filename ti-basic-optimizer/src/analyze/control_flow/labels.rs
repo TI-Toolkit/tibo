@@ -87,7 +87,7 @@ mod tests {
         let mut expected = BTreeMap::new();
         expected.insert(label_name!('R' 'E'), vec![1]);
         expected.insert(label_name!('P' 'L'), vec![1]);
-        expected.insert(label_name!('0'), vec![1, 1, 3]);
+        expected.insert(label_name!('0'), vec![1, 1, 4]);
 
         assert_eq!(test_program.label_usages(), expected)
     }
@@ -99,7 +99,7 @@ mod tests {
         let mut expected = BTreeMap::new();
         expected.insert(label_name!('R' 'E'), 0usize);
         expected.insert(label_name!('P' 'L'), 2);
-        expected.insert(label_name!('0'), 4);
+        expected.insert(label_name!('0'), 5);
 
         assert_eq!(test_program.label_declarations(), expected)
     }
@@ -115,6 +115,6 @@ mod tests {
         assert_eq!(map.find(&2), Some(&label_name!('R' 'E')));
         assert_eq!(map.find(&3), Some(&label_name!('P' 'L')));
         assert_eq!(map.find(&4), Some(&label_name!('P' 'L')));
-        assert_eq!(map.find(&5), Some(&label_name!('0')));
+        assert_eq!(map.find(&6), Some(&label_name!('0')));
     }
 }

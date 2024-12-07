@@ -201,7 +201,7 @@ impl Program {
             let query: Vec<std::ops::Range<usize>> = lexical_blocks.stab(*usage);
             for range in query {
                 literals.insert(range.start);
-                literals.insert(range.end);
+                literals.insert(range.end - 1);
             }
         }
 
