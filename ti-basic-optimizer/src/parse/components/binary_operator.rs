@@ -50,10 +50,10 @@ impl BinOp {
                 Some(Token::OneByte(x))
             }
 
-            Token::OneByte(0x6B) => Some(Token::OneByte(0x6F)),
-            Token::OneByte(0x6C) => Some(Token::OneByte(0x6E)),
-            Token::OneByte(0x6E) => Some(Token::OneByte(0x6C)),
-            Token::OneByte(0x6F) => Some(Token::OneByte(0x6B)),
+            Token::OneByte(0x6B) => Some(Token::OneByte(0x6C)),
+            Token::OneByte(0x6C) => Some(Token::OneByte(0x6B)),
+            Token::OneByte(0x6D) => Some(Token::OneByte(0x6E)),
+            Token::OneByte(0x6E) => Some(Token::OneByte(0x6D)),
 
             _ => None,
         }

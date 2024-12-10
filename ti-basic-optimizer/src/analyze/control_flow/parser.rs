@@ -1,6 +1,5 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
-    os::linux::raw::stat,
 };
 
 use tifloats::{tifloat, Float};
