@@ -10,6 +10,7 @@ pub use crate::parse::components::{
     matrix_name::MatrixName,
     numeric_var_name::NumericVarName,
     pic_image_name::{ImageName, PicName},
+    pseudovariable::PseudoVariable,
     rand::Rand,
     store_target::StoreTarget,
     string::TIString,
@@ -33,6 +34,7 @@ mod matrix_name;
 mod numeric_literal;
 mod numeric_var_name;
 mod pic_image_name;
+mod pseudovariable;
 mod rand;
 mod store_target;
 mod string;
@@ -83,9 +85,7 @@ pub enum Operand {
     Ans,
     I,
     Rand(Rand),
-    GetKey,
-    GetDate,
-    StartTmr,
+    PseudoVariable(PseudoVariable),
     NumericLiteral(tifloats::Float),
     StringLiteral(TIString),
     ListLiteral(TIList),
@@ -138,12 +138,11 @@ impl Parse for Operand {
             }
             Token::OneByte(0x2C) => Ok(Some(Self::I)),
             Token::OneByte(0xAB) => Ok(Rand::parse(token, more)?.map(Self::Rand)),
-            Token::OneByte(0xAD) => Ok(Some(Self::GetKey)),
-            Token::TwoByte(0xEF, 0x09) => Ok(Some(Self::GetDate)),
-            Token::TwoByte(0xEF, 0x0B) => Ok(Some(Self::StartTmr)),
+            Token::OneByte(0xAD) | Token::TwoByte(0xEF, 0x09..=0x0E) => {
+                Ok(PseudoVariable::parse(token, more)?.map(Self::PseudoVariable))
+            }
             Token::OneByte(0x2A) => Ok(TIString::parse(token, more)?.map(Self::StringLiteral)),
             Token::OneByte(0x08) => Ok(TIList::parse(token, more)?.map(Self::ListLiteral)),
-            Token::OneByte(0x06) => Ok(TIMatrix::parse(token, more)?.map(Self::MatrixLiteral)),
             Token::TwoByte(0xAA, _) => Ok(StringName::parse(token, more)?.map(Self::StringName)),
             Token::TwoByte(0x5C, _) => {
                 if let Some(name) = MatrixName::parse(token, more)? {
@@ -204,9 +203,7 @@ impl Reconstruct for Operand {
             Operand::Ans => vec![Token::OneByte(0x72)],
             Operand::I => vec![Token::OneByte(0x2C)],
             Operand::Rand(x) => x.reconstruct(config),
-            Operand::GetKey => vec![Token::OneByte(0xAD)],
-            Operand::GetDate => vec![Token::TwoByte(0xEF, 0x09)],
-            Operand::StartTmr => vec![Token::TwoByte(0xEF, 0x0B)],
+            Operand::PseudoVariable(x) => x.reconstruct(config),
             Operand::NumericLiteral(x) => x.reconstruct(config),
             Operand::StringLiteral(x) => x.reconstruct(config),
             Operand::ListLiteral(x) => x.reconstruct(config),

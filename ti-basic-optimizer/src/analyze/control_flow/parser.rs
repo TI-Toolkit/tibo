@@ -1,6 +1,4 @@
-use std::{
-    collections::{BTreeMap, BTreeSet},
-};
+use std::collections::{BTreeMap, BTreeSet};
 
 use tifloats::{tifloat, Float};
 use titokens::Token;
